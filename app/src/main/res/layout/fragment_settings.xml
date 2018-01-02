@@ -2,24 +2,48 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_margin="10dp"
     android:background="@android:color/white"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
         <android.support.v7.widget.SwitchCompat
             android:id="@+id/tb_switcher"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="end|center_vertical"
-            android:text="转发开关    "
+            android:gravity="left|center_vertical"
+            android:text="转发开关"
             android:textColor="@color/colorPrimary"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/tb_save_sms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="left|center_vertical"
+            android:text="保存收到的短信"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+
+        <android.support.v7.widget.SwitchCompat
+            android:id="@+id/tb_save_sms_forward"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:gravity="left|center_vertical"
+            android:text="只保存转发的短信"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp"
+            android:visibility="gone" />
     </LinearLayout>
 
     <LinearLayout
@@ -45,8 +69,8 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:hint="发信人号码筛选规则"
-                android:lines="1"
-                android:scrollHorizontally="true" />
+                android:scrollHorizontally="true"
+                android:singleLine="true" />
 
             <Button
                 android:id="@+id/btn_delete_number_rex"
@@ -80,8 +104,8 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:hint="短信内容筛选规则"
-                android:lines="1"
-                android:scrollHorizontally="true" />
+                android:scrollHorizontally="true"
+                android:singleLine="true" />
 
             <Button
                 android:id="@+id/btn_delete_content_rex"
@@ -115,8 +139,8 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:hint="收信人号码"
-                android:lines="1"
-                android:scrollHorizontally="true" />
+                android:scrollHorizontally="true"
+                android:singleLine="true" />
 
             <Button
                 android:id="@+id/btn_delete_receiver_number"
@@ -139,7 +163,12 @@
                 android:text="选择"
                 android:textSize="10sp" />
         </LinearLayout>
+
     </LinearLayout>
 
-
+    <Button
+        android:id="@+id/btn_clear_all_saved"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清空保存的短息" />
 </LinearLayout>

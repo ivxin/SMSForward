@@ -31,7 +31,7 @@ public class HomeFragment extends BaseFragment {
         sp = getContext().getSharedPreferences(Constants.SP_FILE_NAME, Context.MODE_PRIVATE);
         boolean isStarted = sp.getBoolean(Constants.STARTED_KEY, false);
 
-        String a = isStarted ? "短信转发已经启动<br><br>" + buildTip() : "没有启动,在设置中配置";
+        String a = isStarted ? "<big><b>短信转发已经启动</b></big><br><br>" + buildTip() : "<big><b>没有启动,在设置中配置</b></big>";
         String b = Constants.HAVE_PERMISSION ? "<br>在设置中修改转发条件" : "<br><color=red>最少需要收短信和发短信的权限才能正常工作</color>";
         tv_welcome.setText(Html.fromHtml(a + b));
         return view;

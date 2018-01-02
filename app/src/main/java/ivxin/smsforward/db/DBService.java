@@ -33,6 +33,7 @@ public class DBService {
             sms.setContent(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("content"))));
             sms.setReceiver(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver"))));
             sms.setForwarded(Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded"))));
+            sms.setStar(c.getString(c.getColumnIndex("is_star")));
             list.add(sms);
         }
         db.close();
@@ -50,6 +51,7 @@ public class DBService {
             sms.setSender(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("sender_address"))));
             sms.setContent(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("content"))));
             sms.setReceiver(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver"))));
+            sms.setStar(c.getString(c.getColumnIndex("is_star")));
             boolean isSent = Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded")));
             sms.setForwarded(isSent);
             if (isSent) {
@@ -66,16 +68,30 @@ public class DBService {
         String sender = StringUtils.encryptBASE64(sms.getSender());
         String content = StringUtils.encryptBASE64(sms.getContent());
         String receiver = StringUtils.encryptBASE64(sms.getReceiver());
+        String is_star = sms.isStar();
         boolean isForwarded = sms.isForwarded();
-        db.execSQL("insert into sms (received_time,sender_address,content,receiver,is_forwarded)values(?,?,?,?,?)",
-                new String[] { receivedTime, sender, content, receiver, isForwarded + "" });
+        db.execSQL("insert into sms (received_time,sender_address,content,receiver,is_forwarded,is_star)values(?,?,?,?,?,?)",
+                new String[]{receivedTime, sender, content, receiver, isForwarded + "", is_star});
         db.close();
     }
 
     public void deleteSMSbyID(SMSEntity sms) {
         SQLiteDatabase db = dbh.getWritableDatabase();
         String id = sms.getId();
-        db.execSQL("delete from sms where id=?", new String[] { id });
+        db.execSQL("delete from sms where id=?", new String[]{id});
+        db.close();
+    }
+
+    public void deleteAllSMS() {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        db.execSQL("delete from sms where is_star='0'");
+        db.close();
+    }
+
+    public void starSMS(SMSEntity sms, String isStar) {
+        SQLiteDatabase db = dbh.getWritableDatabase();
+        String id = sms.getId();
+        db.execSQL("update sms set is_star=? where id=?", new String[]{isStar, id});
         db.close();
     }
 
@@ -91,6 +107,7 @@ public class DBService {
             sms.setContent(c.getString(c.getColumnIndex("content")));
             sms.setReceiver(c.getString(c.getColumnIndex("receiver")));
             sms.setForwarded(Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded"))));
+            sms.setStar(c.getString(c.getColumnIndex("is_star")));
             list.add(sms);
         }
         db.close();

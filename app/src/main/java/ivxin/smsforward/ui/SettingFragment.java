@@ -4,13 +4,13 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
@@ -20,7 +20,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +30,7 @@ import ivxin.smsforward.Constants;
 import ivxin.smsforward.R;
 import ivxin.smsforward.base.BaseFragment;
 import ivxin.smsforward.base.OnPermissionCheckedListener;
+import ivxin.smsforward.db.DBService;
 
 /**
  * Created by yaping.wang on 2017/9/14.
@@ -38,6 +38,7 @@ import ivxin.smsforward.base.OnPermissionCheckedListener;
 
 public class SettingFragment extends BaseFragment implements View.OnClickListener {
     private static final int CONTACTS = 91;
+    private Context context;
     private TextView tv_number_rex;
     private Button btn_delete_number_rex;
     private Button btn_add_number_rex;
@@ -48,13 +49,17 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     private Button btn_delete_receiver_number;
     private Button btn_add_receiver_number;
     private Button btn_choose_receiver_number;
+    private Button btn_clear_all_saved;
     private SwitchCompat tb_switcher;
+    private SwitchCompat tb_save_sms;
+    private SwitchCompat tb_save_sms_forward;
     private SharedPreferences sp;
     private ArrayList<CharSequence> contactPhoneNumbers = new ArrayList<>();
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        context = this.getContext();
         sp = getContext().getSharedPreferences(Constants.SP_FILE_NAME, Context.MODE_PRIVATE);
         View view = inflater.inflate(R.layout.fragment_settings, null);
         initView(view);
@@ -63,6 +68,8 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
 
     private void initView(View view) {
         tb_switcher = view.findViewById(R.id.tb_switcher);
+        tb_save_sms = view.findViewById(R.id.tb_save_sms);
+        tb_save_sms_forward = view.findViewById(R.id.tb_save_sms_forward);
         tv_number_rex = view.findViewById(R.id.tv_number_rex);
         btn_delete_number_rex = view.findViewById(R.id.btn_delete_number_rex);
         btn_add_number_rex = view.findViewById(R.id.btn_add_number_rex);
@@ -73,14 +80,17 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         btn_delete_receiver_number = view.findViewById(R.id.btn_delete_receiver_number);
         btn_add_receiver_number = view.findViewById(R.id.btn_add_receiver_number);
         btn_choose_receiver_number = view.findViewById(R.id.btn_choose_receiver_number);
+        btn_clear_all_saved = view.findViewById(R.id.btn_clear_all_saved);
 
         setDataFromSP();
-        tb_switcher.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                sp.edit().putBoolean(Constants.STARTED_KEY, b).apply();
-            }
+        tb_switcher.setOnCheckedChangeListener((compoundButton, b) ->
+                sp.edit().putBoolean(Constants.STARTED_KEY, b).apply());
+        tb_save_sms.setOnCheckedChangeListener((compoundButton, b) -> {
+            sp.edit().putBoolean(Constants.SAVE_SMS_KEY, b).apply();
+            tb_save_sms_forward.setVisibility(b ? View.VISIBLE : View.GONE);
         });
+        tb_save_sms_forward.setOnCheckedChangeListener((compoundButton, b) ->
+                sp.edit().putBoolean(Constants.SAVE_FORWARD_ONLY_KEY, b).apply());
         btn_add_number_rex.setOnClickListener(this);
         btn_add_content_rex.setOnClickListener(this);
         btn_add_receiver_number.setOnClickListener(this);
@@ -93,14 +103,18 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         tv_number_rex.setOnClickListener(this);
         tv_content_rex.setOnClickListener(this);
         tv_receiver_number.setOnClickListener(this);
+
+        btn_clear_all_saved.setOnClickListener(this);
     }
 
     private void setDataFromSP() {
         tb_switcher.setChecked(sp.getBoolean(Constants.STARTED_KEY, false));
+        tb_save_sms.setChecked(sp.getBoolean(Constants.SAVE_SMS_KEY, false));
+        tb_save_sms_forward.setChecked(sp.getBoolean(Constants.SAVE_FORWARD_ONLY_KEY, false));
         tv_number_rex.setText(sp.getString(Constants.NUM_REX_KEY, ""));
         tv_content_rex.setText(sp.getString(Constants.REX_KEY, ""));
         tv_receiver_number.setText(sp.getString(Constants.TARGET_KEY, ""));
-
+        tb_save_sms_forward.setVisibility(tb_save_sms.isChecked() ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -112,30 +126,21 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_add_number_rex:
-                showInputDialog("添加号码过滤规则", true, new InputDialogCallback() {
-                    @Override
-                    public void onClick(View view, String text) {
-                        String newRex = addRex(Constants.NUM_REX_KEY, text);
-                        tv_number_rex.setText(newRex);
-                    }
+                showInputDialog("添加号码过滤规则", true, (view1, text) -> {
+                    String newRex = addRex(Constants.NUM_REX_KEY, text);
+                    tv_number_rex.setText(newRex);
                 });
                 break;
             case R.id.btn_add_content_rex:
-                showInputDialog("添加内容过滤规则", false, new InputDialogCallback() {
-                    @Override
-                    public void onClick(View view, String text) {
-                        String newRex = addRex(Constants.REX_KEY, text);
-                        tv_content_rex.setText(newRex);
-                    }
+                showInputDialog("添加内容过滤规则", false, (view12, text) -> {
+                    String newRex = addRex(Constants.REX_KEY, text);
+                    tv_content_rex.setText(newRex);
                 });
                 break;
             case R.id.btn_add_receiver_number:
-                showInputDialog("添加收信人", true, new InputDialogCallback() {
-                    @Override
-                    public void onClick(View view, String text) {
-                        String newRex = addRex(Constants.TARGET_KEY, text);
-                        tv_receiver_number.setText(newRex);
-                    }
+                showInputDialog("添加收信人", true, (view13, text) -> {
+                    String newRex = addRex(Constants.TARGET_KEY, text);
+                    tv_receiver_number.setText(newRex);
                 });
                 break;
             case R.id.btn_choose_receiver_number:
@@ -161,6 +166,14 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                 break;
             case R.id.tv_receiver_number:
                 showContentDialog(3);
+                break;
+            case R.id.btn_clear_all_saved:
+                showConfirmDialog("清空", "确定要清空保存的短信?\n(不含标记★的)", "确定", "取消",
+                        (dialog, which) -> {
+                            dialog.dismiss();
+                            DBService dbs = new DBService(context);
+                            dbs.deleteAllSMS();
+                        }, (dialog, which) -> dialog.dismiss());
                 break;
         }
     }
@@ -198,16 +211,13 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                                     String newRex = addRex(Constants.TARGET_KEY, contactPhoneNumbers.get(0));
                                     tv_receiver_number.setText(newRex);
                                 } else if (contactPhoneNumbers.size() > 0) {
-                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                    AlertDialog.Builder builder = new AlertDialog.Builder(context);
                                     builder.setTitle(username);
                                     CharSequence[] charSequences = new CharSequence[contactPhoneNumbers.size()];
-                                    builder.setItems(contactPhoneNumbers.toArray(charSequences), new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialogInterface, int i) {
-                                            dialogInterface.dismiss();
-                                            String newRex = addRex(Constants.TARGET_KEY, contactPhoneNumbers.get(i));
-                                            tv_receiver_number.setText(newRex);
-                                        }
+                                    builder.setItems(contactPhoneNumbers.toArray(charSequences), (dialogInterface, i) -> {
+                                        dialogInterface.dismiss();
+                                        String newRex = addRex(Constants.TARGET_KEY, contactPhoneNumbers.get(i));
+                                        tv_receiver_number.setText(newRex);
                                     });
                                     builder.create().show();
                                 }
@@ -268,21 +278,18 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         if (TextUtils.isEmpty(text)) return;
         try {
             final String[] texts = text.split(";");
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("点击一项删除");
-            builder.setItems(texts, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    try {
-                        String newText = text.replace(texts[i], "").replace(";;", ";");
-                        if (newText.endsWith(";")) {
-                            newText = newText.substring(0, newText.length() - 1);
-                        }
-                        sp.edit().putString(key.toString(), newText).apply();
-                    } catch (Exception ignore) {
-                    } finally {
-                        setDataFromSP();
+            builder.setItems(texts, (dialogInterface, i) -> {
+                try {
+                    String newText = text.replace(texts[i], "").replace(";;", ";");
+                    if (newText.endsWith(";")) {
+                        newText = newText.substring(0, newText.length() - 1);
                     }
+                    sp.edit().putString(key.toString(), newText).apply();
+                } catch (Exception ignore) {
+                } finally {
+                    setDataFromSP();
                 }
             });
             builder.create().show();
@@ -291,7 +298,7 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     }
 
     private void showInputDialog(String title, boolean isNumber, final InputDialogCallback inputDialogCallback) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         View view = View.inflate(getContext(), R.layout.layout_input_dialog, null);
         builder.setView(view);
         final AlertDialog dialog = builder.create();
@@ -301,15 +308,12 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         et_input_filed.setInputType(isNumber ? InputType.TYPE_CLASS_PHONE : InputType.TYPE_CLASS_TEXT);
         Button btn_confirm = view.findViewById(R.id.btn_confirm);
         tv_dialog_title.setText(title);
-        btn_confirm.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String text = et_input_filed.getText().toString();
-                if (inputDialogCallback != null && !TextUtils.isEmpty(text)) {
-                    inputDialogCallback.onClick(view, text);
-                }
-                dialog.dismiss();
+        btn_confirm.setOnClickListener(view1 -> {
+            String text = et_input_filed.getText().toString();
+            if (inputDialogCallback != null && !TextUtils.isEmpty(text)) {
+                inputDialogCallback.onClick(view1, text);
             }
+            dialog.dismiss();
         });
         dialog.show();
     }

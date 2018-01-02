@@ -14,7 +14,7 @@
         android:text="只显示已转发的信息  "
         android:textColor="@color/colorPrimary" />
 
-    <ListView
+    <com.qmuiteam.qmui.widget.QMUIAnimationListView
         android:id="@+id/lv_forwarded"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -1,9 +1,12 @@
 package ivxin.smsforward.base;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -16,11 +19,19 @@ import ivxin.smsforward.Constants;
  */
 
 public abstract class BaseFragment extends Fragment {
+    private Activity activity;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        activity = this.getActivity();
+    }
+
     public abstract boolean onBackPressed();
 
-    public void showConfirmDialog(String title, String msg, String buttonText, DialogInterface.OnClickListener onBottonClick) {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(getContext());
-        alertDialog.setPositiveButton(buttonText, onBottonClick);
+    public void showConfirmDialog(String title, String msg, String buttonText, DialogInterface.OnClickListener onButtonClick) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(activity);
+        alertDialog.setPositiveButton(buttonText, onButtonClick);
         alertDialog.setTitle(title);
         alertDialog.setMessage(msg);
         alertDialog.setCancelable(true);
@@ -29,11 +40,11 @@ public abstract class BaseFragment extends Fragment {
 
     public void showConfirmDialog(String title, String msg,
                                   String buttonText1, String buttonText2,
-                                  DialogInterface.OnClickListener onBottonClick1,
-                                  DialogInterface.OnClickListener onBottonClick2) {
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(getContext());
-        alertDialog.setPositiveButton(buttonText1, onBottonClick1);
-        alertDialog.setNegativeButton(buttonText2, onBottonClick2);
+                                  DialogInterface.OnClickListener onButtonClick1,
+                                  DialogInterface.OnClickListener onButtonClick2) {
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(activity);
+        alertDialog.setPositiveButton(buttonText1, onButtonClick1);
+        alertDialog.setNegativeButton(buttonText2, onButtonClick2);
         alertDialog.setTitle(title);
         alertDialog.setMessage(msg);
         alertDialog.setCancelable(false);
@@ -49,12 +60,12 @@ public abstract class BaseFragment extends Fragment {
         for (String permission : permissions) {
             if (Constants.sdkIsAboveM) {
                 // 检查权限
-                if (ContextCompat.checkSelfPermission(getContext(), permission) == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED) {
                     if (onPermissionCheckedListener != null)
                         onPermissionCheckedListener.onPermissionGranted(permission);
                 } else {
                     // 进入到这里代表没有权限.执行请求权限
-                    ActivityCompat.requestPermissions(getActivity(), permissions, PERMISSION_REQUEST_CODE);
+                    ActivityCompat.requestPermissions(activity, permissions, PERMISSION_REQUEST_CODE);
                 }
             } else {// 6.0以下不用检查权限
                 if (onPermissionCheckedListener != null)

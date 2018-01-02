@@ -1,7 +1,7 @@
 package ivxin.smsforward.ui;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
@@ -40,7 +40,7 @@ public class DashBoardFragment extends BaseFragment {
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         setRetainInstance(true);
         dbService = new DBService(getContext());
         View view = inflater.inflate(R.layout.fragment_dashboard, null, false);
@@ -76,36 +76,23 @@ public class DashBoardFragment extends BaseFragment {
         adapter.notifyDataSetChanged();
     }
 
-    CompoundButton.OnCheckedChangeListener onCheckedChangeListener=new CompoundButton.OnCheckedChangeListener() {
-        @Override
-        public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-            isShowForwarded = b;
-            refreshSMSData();
-        }
+    CompoundButton.OnCheckedChangeListener onCheckedChangeListener = (compoundButton, b) -> {
+        isShowForwarded = b;
+        refreshSMSData();
     };
 
-    AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
-        @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            SMSEntity smsEntity = smsEntityList.get(i);
-            showConfirmDialog(smsEntity.getSender(), smsEntity.getContent(), "确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                }
-            });
-        }
+    AdapterView.OnItemClickListener onItemClickListener = (adapterView, view, i, l) -> {
+        SMSEntity smsEntity = smsEntityList.get(i);
+//        showDetailDialog(smsEntity);
+        showConfirmDialog(smsEntity.getSender(), smsEntity.getContent(), "确定", (dialogInterface, i1) -> dialogInterface.dismiss());
     };
     AdapterView.OnItemLongClickListener onItemLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> adapterView, View view, final int i, long l) {
-            showConfirmDialog("提示", "删除此项?", "确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int witch) {
-                    dbService.deleteSMSbyID(smsEntityList.get(i));
-                    refreshSMSData();
-                    dialogInterface.dismiss();
-                }
+            showConfirmDialog("提示", "删除此项?", "确定", (dialogInterface, witch) -> {
+                dbService.deleteSMSbyID(smsEntityList.get(i));
+                refreshSMSData();
+                dialogInterface.dismiss();
             });
             return true;
         }

@@ -13,6 +13,7 @@ public class SMSEntity extends DisplayableEntity {
     private long sendTime;
     private long receivedTime;
     private boolean isForwarded;
+    private String isStar;
 
     public String getId() {
         return id;
@@ -76,5 +77,13 @@ public class SMSEntity extends DisplayableEntity {
 
     public void setForwarded(boolean forwarded) {
         isForwarded = forwarded;
+    }
+
+    public String isStar() {
+        return isStar;
+    }
+
+    public void setStar(String star) {
+        isStar = star;
     }
 }

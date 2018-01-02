@@ -21,6 +21,9 @@ public class Constants {
     public static final String REX_KEY = "rex";
     public static final String STARTED_KEY = "started";
 
+    public static final String SAVE_SMS_KEY = "SAVE_SMS";
+    public static final String SAVE_FORWARD_ONLY_KEY = "SAVE_FORWARD_ONLY";
+
     public static final String PATTERN = "yyyy-MM-dd HH:ss:mm";
     public static final String ACTION = "com.ivxin.smsforward";
 

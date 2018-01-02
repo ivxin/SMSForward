@@ -12,7 +12,7 @@ import ivxin.smsforward.Constants;
 
 public class DBconnHelper extends SQLiteOpenHelper {
     public DBconnHelper(Context context) {
-        super(context, Constants.DB_FILE_NAME, null, 1);
+        super(context, Constants.DB_FILE_NAME, null, 2);
     }
 
     @Override
@@ -23,10 +23,14 @@ public class DBconnHelper extends SQLiteOpenHelper {
                 + "sender_address varchar(20),"
                 + "content varchar(3000),"
                 + "receiver varchar(20),"
-                + "is_forwarded boolean)");
+                + "is_forwarded boolean,"
+                + "is_star varchar(10))");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if(oldVersion==1){
+            db.execSQL("alter table sms add column is_star varchar(10);");
+        }
     }
 }

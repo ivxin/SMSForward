@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -33,6 +32,8 @@ public class SMSSendingHandler {
     private String numRex;
     private String rex;
     private String target;
+    private boolean is_save_sms;
+    private boolean is_save_forward_only;
 
     public SMSSendingHandler(Context context, SMSEntity newSms) {
         this.context = context;
@@ -47,6 +48,8 @@ public class SMSSendingHandler {
         numRex = sp.getString(Constants.NUM_REX_KEY, "").trim();
         rex = sp.getString(Constants.REX_KEY, "").trim();
         target = sp.getString(Constants.TARGET_KEY, "").trim();
+        is_save_sms=sp.getBoolean(Constants.SAVE_SMS_KEY,false);
+        is_save_forward_only=sp.getBoolean(Constants.SAVE_FORWARD_ONLY_KEY,false);
         new MyThread().start();
     }
 
@@ -114,9 +117,19 @@ public class SMSSendingHandler {
         // sms保存在DB
         newSms.setReceiver(target);
         newSms.setForwarded(smsSended);
+        newSms.setStar("0");
         newSms.setSendTime(System.currentTimeMillis());
-        DBService dbs = new DBService(context);
-        dbs.insertSMS(newSms);
+        if(is_save_sms){
+            if(is_save_forward_only){
+                if(smsSended){
+                    DBService dbs = new DBService(context);
+                    dbs.insertSMS(newSms);
+                }
+            }else{
+                DBService dbs = new DBService(context);
+                dbs.insertSMS(newSms);
+            }
+        }
     }
 
     private class SMSSendTask implements Runnable {
@@ -181,12 +194,7 @@ public class SMSSendingHandler {
         } catch (IllegalArgumentException | SecurityException | IllegalStateException | IOException e) {
             e.printStackTrace();
         }
-        player.setOnCompletionListener(new OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                player.release();
-            }
-        });
+        player.setOnCompletionListener(mp -> player.release());
     }
 
 }

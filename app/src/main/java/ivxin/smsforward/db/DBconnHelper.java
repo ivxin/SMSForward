@@ -12,7 +12,7 @@ import ivxin.smsforward.Constants;
 
 public class DBconnHelper extends SQLiteOpenHelper {
     public DBconnHelper(Context context) {
-        super(context, Constants.DB_FILE_NAME, null, 2);
+        super(context, Constants.DB_FILE_NAME, null, 3);
     }
 
     @Override

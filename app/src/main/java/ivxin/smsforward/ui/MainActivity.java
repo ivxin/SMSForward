@@ -101,7 +101,7 @@ public class MainActivity extends BaseActivity {
             public void onPermissionDenied(String permission) {
                 Constants.HAVE_PERMISSION = false;
             }
-        }, Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS);
+        }, Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS, Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
 
     private void changeFragment(int index) {

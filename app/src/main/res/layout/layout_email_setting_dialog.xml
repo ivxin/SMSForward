@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="ServerHost"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_server_host"
+                android:layout_weight="1"
+                android:hint="smtp.163.com"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="ServerPort"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_server_port"
+                android:layout_weight="1"
+                android:hint="110"
+                android:inputType="number"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="SocketFactoryPort"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_socket_factory_port"
+                android:layout_weight="1"
+                android:hint="465"
+                android:inputType="number"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="AutenticationEnabled"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <CheckBox
+                android:id="@+id/cb_autentication"
+                android:layout_weight="1" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="Sender Email"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_sender_email"
+                android:layout_weight="1"
+                android:hint="xxx@163.com"
+                android:inputType="textEmailAddress"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="Sender Email Password"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_sender_email_password"
+                android:layout_weight="1"
+                android:hint="password"
+                android:inputType="textVisiblePassword"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+    </TableLayout>
+
+</LinearLayout>

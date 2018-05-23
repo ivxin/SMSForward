@@ -24,13 +24,22 @@ public class DBconnHelper extends SQLiteOpenHelper {
                 + "content varchar(3000),"
                 + "receiver varchar(20),"
                 + "is_forwarded boolean,"
-                + "is_star varchar(10))");
+                + "is_star varchar(10),"
+                + "receiver_email varchar(50))"
+        );
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if(oldVersion==1){
-            db.execSQL("alter table sms add column is_star varchar(10);");
+        switch (oldVersion){
+            case 1:
+                db.execSQL("alter table sms add column is_star varchar(10);");
+                db.execSQL("alter table sms add column receiver_email varchar(50);");
+                break;
+            case 2:
+                db.execSQL("alter table sms add column receiver_email varchar(50);");
+                break;
+                default:
         }
     }
 }

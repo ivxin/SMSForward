@@ -15,14 +15,17 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import ivxin.smsforward.Constants;
 import ivxin.smsforward.db.DBService;
+import ivxin.smsforward.entity.EmailSenderConfig;
 import ivxin.smsforward.entity.SMSEntity;
 
 public class SMSSendingHandler {
+    private EmailSenderConfig emailSenderConfig;
     private ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private Context context;
     private SMSEntity newSms;
@@ -32,8 +35,12 @@ public class SMSSendingHandler {
     private String numRex;
     private String rex;
     private String target;
+    private String email_target;
     private boolean is_save_sms;
     private boolean is_save_forward_only;
+
+    private boolean is_sms_forward;
+    private boolean is_email_forward;
 
     public SMSSendingHandler(Context context, SMSEntity newSms) {
         this.context = context;
@@ -48,8 +55,16 @@ public class SMSSendingHandler {
         numRex = sp.getString(Constants.NUM_REX_KEY, "").trim();
         rex = sp.getString(Constants.REX_KEY, "").trim();
         target = sp.getString(Constants.TARGET_KEY, "").trim();
-        is_save_sms=sp.getBoolean(Constants.SAVE_SMS_KEY,false);
-        is_save_forward_only=sp.getBoolean(Constants.SAVE_FORWARD_ONLY_KEY,false);
+        email_target = sp.getString(Constants.EMAIL_TARGET_KEY, "").trim();
+        is_save_sms = sp.getBoolean(Constants.SAVE_SMS_KEY, false);
+        is_save_forward_only = sp.getBoolean(Constants.SAVE_FORWARD_ONLY_KEY, false);
+        is_sms_forward = sp.getBoolean(Constants.SMS_FORWARD, false);
+        is_email_forward = sp.getBoolean(Constants.EMAIL_FORWARD, false);
+
+        if (is_email_forward && emailSenderConfig == null) {
+            ObjectSerializationUtil.getInstance(context, object -> emailSenderConfig = (EmailSenderConfig) object).getObject(Constants.EmailSenderConfig_FILE_NAME);
+        }
+
         new MyThread().start();
     }
 
@@ -96,41 +111,78 @@ public class SMSSendingHandler {
             }
         }
 
-
         // 条件都满足时发信息
         if (numRexGood && rexGood
 //                && targetGood
                 ) {
             String[] targets = target.split(";");
-            if (targets.length == 0) {
-                return;
-            } else {
+            String[] email_targets = email_target.split(";");
+            if (is_sms_forward && targets.length > 0) {
                 for (String tar : targets) {
                     tar = tar.trim().replaceAll("\\s*", "");
                     singleThreadExecutor.execute(new SMSSendTask(newSms, tar));
                 }
             }
+            if (is_email_forward && email_targets.length > 0) {
+                singleThreadExecutor.execute(new EmailSendTask(newSms, email_targets));
+            }
+
             smsSended = true;
         } else {
             smsSended = false;
         }
         // sms保存在DB
+        newSms.setReceiver_email(email_target);
         newSms.setReceiver(target);
         newSms.setForwarded(smsSended);
         newSms.setStar("0");
         newSms.setSendTime(System.currentTimeMillis());
-        if(is_save_sms){
-            if(is_save_forward_only){
-                if(smsSended){
+        if (is_save_sms) {
+            if (is_save_forward_only) {
+                if (smsSended) {
                     DBService dbs = new DBService(context);
                     dbs.insertSMS(newSms);
                 }
-            }else{
+            } else {
                 DBService dbs = new DBService(context);
                 dbs.insertSMS(newSms);
             }
         }
     }
+
+    private class EmailSendTask implements Runnable {
+        SMSEntity sms;
+        String[] targets;
+
+        EmailSendTask(SMSEntity sms, String[] email_targets) {
+            this.sms = sms;
+            this.targets = email_targets;
+        }
+
+        @Override
+        public void run() {
+            MailSender mailSender = new MailSender();
+            mailSender.useMailPropertiesSNMP(emailSenderConfig.getServerHost(), emailSenderConfig.getServerPort(), emailSenderConfig.getSocketFactoryPort(), emailSenderConfig.isAutenticationEnabled());
+            mailSender.setCredentials(emailSenderConfig.getUsermail(), emailSenderConfig.getPassword());
+            mailSender.setToAddresses(targets);
+            mailSender.setSubject(String.format(Locale.CHINA, "[短信转发] 来自：%s", sms.getSender()));
+            mailSender.setMailText(String.format(Locale.CHINA,
+                    "%s\n" +
+                            "来自：%s\n" +
+                            "接收时间：%s\n" +
+                            "转发时间：%s",
+                    sms.getContent(),
+                    sms.getSender(),
+                    StringUtils.getDateFomated(Constants.PATTERN, sms.getReceivedTime()),
+                    StringUtils.getDateFomated(Constants.PATTERN, sms.getSendTime())));
+            try {
+                mailSender.send();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     private class SMSSendTask implements Runnable {
 

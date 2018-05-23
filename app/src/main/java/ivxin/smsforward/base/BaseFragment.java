@@ -2,6 +2,7 @@ package ivxin.smsforward.base;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.widget.Toast;
 
 import ivxin.smsforward.Constants;
 
@@ -95,5 +97,30 @@ public abstract class BaseFragment extends Fragment {
                     }
                 break;
         }
+    }
+
+    private Toast mToast;
+
+    public void toast(CharSequence text) {
+        toast(getContext(), text, Toast.LENGTH_SHORT);
+    }
+
+    public void toast(Context context, CharSequence text, int length) {
+        mToast = Toast.makeText(context, text, length);
+        mToast.setText(text);
+        mToast.setDuration(length);
+        mToast.show();
+    }
+
+    public void toast(Context context, int resId, int length) {
+        mToast = Toast.makeText(context, resId, length);
+        mToast.setText(resId);
+        mToast.setDuration(length);
+        mToast.show();
+    }
+
+    public void cancelToast() {
+        if (mToast != null)
+            mToast.cancel();
     }
 }

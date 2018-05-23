@@ -42,6 +42,9 @@ public class HomeFragment extends BaseFragment {
         String from = sp.getString(Constants.NUM_REX_KEY, "").trim();
         String keyword = sp.getString(Constants.REX_KEY, "").trim();
         String target = sp.getString(Constants.TARGET_KEY, "").trim();
+        String email_target = sp.getString(Constants.EMAIL_TARGET_KEY, "").trim();
+        boolean is_sms_forward = sp.getBoolean(Constants.SMS_FORWARD, false);
+        boolean is_email_forward = sp.getBoolean(Constants.EMAIL_FORWARD, false);
         if (TextUtils.isEmpty(from)) {
             from = "任何人的";
         } else {
@@ -52,10 +55,17 @@ public class HomeFragment extends BaseFragment {
         } else {
             keyword = "内容含有[" + keyword.replaceAll(";", "]或[") + "]的字符";
         }
-        if (!TextUtils.isEmpty(keyword)) {
+        if (is_sms_forward && !TextUtils.isEmpty(target)) {
             target = "[" + target.replaceAll(";", "],[") + "]";
+        } else {
+            target = "";
         }
-        tip = "将转发来自" + from + "<br>且" + keyword + "的信息<br>到" + target;
+        if (is_email_forward && !TextUtils.isEmpty(email_target)) {
+            email_target = "[" + email_target.replaceAll(";", "],[") + "]";
+        } else {
+            email_target = "";
+        }
+        tip = "将转发来自" + from + "<br>且" + keyword + "的信息<br>到" + target + "<br>" + email_target;
         return tip;
     }
 

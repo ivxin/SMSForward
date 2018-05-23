@@ -13,6 +13,7 @@ import android.util.Log;
 
 public class Constants {
     public static final boolean sdkIsAboveM = Build.VERSION.SDK_INT >= 23;//Build.VERSION_CODES.M			Android 6.0
+    public static final String EmailSenderConfig_FILE_NAME = "EmailSenderConfig";
     public static final String DB_FILE_NAME = "sms_db_name.db";
     public static final String SP_FILE_NAME = "sp_file";
 
@@ -29,6 +30,11 @@ public class Constants {
 
     public static boolean HAVE_PERMISSION = false;
     public static boolean started = false;
+
+    public static final String SMS_FORWARD = "SMS_FORWARD";
+    public static final String EMAIL_FORWARD = "EMAIL_FORWARD";
+
+    public static final String EMAIL_TARGET_KEY = "EMAIL_TARGET_KEY";
 
     /**
      * 返回当前程序版本名

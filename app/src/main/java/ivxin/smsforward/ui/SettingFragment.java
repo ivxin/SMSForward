@@ -20,9 +20,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -31,6 +32,8 @@ import ivxin.smsforward.R;
 import ivxin.smsforward.base.BaseFragment;
 import ivxin.smsforward.base.OnPermissionCheckedListener;
 import ivxin.smsforward.db.DBService;
+import ivxin.smsforward.entity.EmailSenderConfig;
+import ivxin.smsforward.utils.ObjectSerializationUtil;
 
 /**
  * Created by yaping.wang on 2017/9/14.
@@ -38,6 +41,7 @@ import ivxin.smsforward.db.DBService;
 
 public class SettingFragment extends BaseFragment implements View.OnClickListener {
     private static final int CONTACTS = 91;
+    private EmailSenderConfig emailSenderConfig;
     private Context context;
     private TextView tv_number_rex;
     private Button btn_delete_number_rex;
@@ -50,6 +54,17 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     private Button btn_add_receiver_number;
     private Button btn_choose_receiver_number;
     private Button btn_clear_all_saved;
+
+    private CheckBox cb_forward_sms;
+    private LinearLayout ll_forward_sms;
+
+    private CheckBox cb_forward_email;
+    private LinearLayout ll_forward_email;
+    private Button btn_email_sender_config;
+    private TextView tv_email_address;
+    private Button btn_delete_email;
+    private Button btn_add_email;
+
     private SwitchCompat tb_switcher;
     private SwitchCompat tb_save_sms;
     private SwitchCompat tb_save_sms_forward;
@@ -82,6 +97,16 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         btn_choose_receiver_number = view.findViewById(R.id.btn_choose_receiver_number);
         btn_clear_all_saved = view.findViewById(R.id.btn_clear_all_saved);
 
+        cb_forward_sms = view.findViewById(R.id.cb_forward_sms);
+        ll_forward_sms = view.findViewById(R.id.ll_forward_sms);
+
+        cb_forward_email = view.findViewById(R.id.cb_forward_email);
+        ll_forward_email = view.findViewById(R.id.ll_forward_email);
+        btn_email_sender_config = view.findViewById(R.id.btn_email_sender_config);
+        tv_email_address = view.findViewById(R.id.tv_email_address);
+        btn_delete_email = view.findViewById(R.id.btn_delete_email);
+        btn_add_email = view.findViewById(R.id.btn_add_email);
+
         setDataFromSP();
         tb_switcher.setOnCheckedChangeListener((compoundButton, b) ->
                 sp.edit().putBoolean(Constants.STARTED_KEY, b).apply());
@@ -100,10 +125,23 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         btn_delete_content_rex.setOnClickListener(this);
         btn_delete_receiver_number.setOnClickListener(this);
 
+        cb_forward_sms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            ll_forward_sms.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            sp.edit().putBoolean(Constants.SMS_FORWARD, isChecked).apply();
+        });
         tv_number_rex.setOnClickListener(this);
         tv_content_rex.setOnClickListener(this);
         tv_receiver_number.setOnClickListener(this);
+        tv_email_address.setOnClickListener(this);
 
+        cb_forward_email.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            ll_forward_email.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            sp.edit().putBoolean(Constants.EMAIL_FORWARD, isChecked).apply();
+        });
+        btn_delete_email.setOnClickListener(this);
+        btn_add_email.setOnClickListener(this);
+
+        btn_email_sender_config.setOnClickListener(this);
         btn_clear_all_saved.setOnClickListener(this);
     }
 
@@ -115,6 +153,12 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
         tv_content_rex.setText(sp.getString(Constants.REX_KEY, ""));
         tv_receiver_number.setText(sp.getString(Constants.TARGET_KEY, ""));
         tb_save_sms_forward.setVisibility(tb_save_sms.isChecked() ? View.VISIBLE : View.GONE);
+
+        cb_forward_sms.setChecked(sp.getBoolean(Constants.SMS_FORWARD, false));
+        cb_forward_email.setChecked(sp.getBoolean(Constants.EMAIL_FORWARD, false));
+        ll_forward_sms.setVisibility(cb_forward_sms.isChecked() ? View.VISIBLE : View.GONE);
+        ll_forward_email.setVisibility(cb_forward_email.isChecked() ? View.VISIBLE : View.GONE);
+        tv_email_address.setText(sp.getString(Constants.EMAIL_TARGET_KEY, ""));
     }
 
     @Override
@@ -143,6 +187,12 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                     tv_receiver_number.setText(newRex);
                 });
                 break;
+            case R.id.btn_add_email:
+                showInputDialog("添加收信人邮箱", false, (view13, text) -> {
+                    String newRex = addRex(Constants.EMAIL_TARGET_KEY, text);
+                    tv_email_address.setText(newRex);
+                });
+                break;
             case R.id.btn_choose_receiver_number:
                 startActivityForResult(new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI), CONTACTS);
                 break;
@@ -158,6 +208,10 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                 String new_receiver_number = removeRex(Constants.TARGET_KEY);
                 tv_receiver_number.setText(new_receiver_number);
                 break;
+            case R.id.btn_delete_email:
+                String new_receiver_email = removeRex(Constants.EMAIL_TARGET_KEY);
+                tv_email_address.setText(new_receiver_email);
+                break;
             case R.id.tv_number_rex:
                 showContentDialog(1);
                 break;
@@ -167,6 +221,9 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
             case R.id.tv_receiver_number:
                 showContentDialog(3);
                 break;
+            case R.id.tv_email_address:
+                showContentDialog(4);
+                break;
             case R.id.btn_clear_all_saved:
                 showConfirmDialog("清空", "确定要清空保存的短信?\n(不含标记★的)", "确定", "取消",
                         (dialog, which) -> {
@@ -174,6 +231,9 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                             DBService dbs = new DBService(context);
                             dbs.deleteAllSMS();
                         }, (dialog, which) -> dialog.dismiss());
+                break;
+            case R.id.btn_email_sender_config:
+                showEmailSenderConfigEditDialog();
                 break;
         }
     }
@@ -222,13 +282,13 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                                     builder.create().show();
                                 }
                             } else {
-                                Toast.makeText(getContext(), "联系人没有号码", Toast.LENGTH_SHORT).show();
+                                toast("联系人没有号码");
                             }
                         }
 
                         @Override
                         public void onPermissionDenied(String permission) {
-                            Toast.makeText(getContext(), "没有权限", Toast.LENGTH_SHORT).show();
+                            toast("没有权限");
                         }
                     }, Manifest.permission.READ_CONTACTS);
                     break;
@@ -272,6 +332,9 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
                 break;
             case 3:
                 key.append(Constants.TARGET_KEY);
+                break;
+            case 4:
+                key.append(Constants.EMAIL_TARGET_KEY);
                 break;
         }
         final String text = sp.getString(key.toString(), "");
@@ -320,5 +383,45 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
 
     interface InputDialogCallback {
         void onClick(View view, String text);
+    }
+
+    private void showEmailSenderConfigEditDialog() {
+        ObjectSerializationUtil.getInstance(context, object -> {
+            if (object == null) {
+                emailSenderConfig = new EmailSenderConfig();
+            } else {
+                emailSenderConfig = (EmailSenderConfig) object;
+            }
+            View view = View.inflate(context, R.layout.layout_email_setting_dialog, null);
+            EditText et_server_host = (EditText) view.findViewById(R.id.et_server_host);
+            EditText et_server_port = (EditText) view.findViewById(R.id.et_server_port);
+            EditText et_socket_factory_port = (EditText) view.findViewById(R.id.et_socket_factory_port);
+            CheckBox cb_autentication = (CheckBox) view.findViewById(R.id.cb_autentication);
+            EditText et_sender_email = (EditText) view.findViewById(R.id.et_sender_email);
+            EditText et_sender_email_password = (EditText) view.findViewById(R.id.et_sender_email_password);
+
+            et_server_host.setText(emailSenderConfig.getServerHost());
+            et_server_port.setText(String.valueOf(emailSenderConfig.getServerPort()));
+            et_socket_factory_port.setText(String.valueOf(emailSenderConfig.getSocketFactoryPort()));
+            cb_autentication.setChecked(emailSenderConfig.isAutenticationEnabled());
+            et_sender_email.setText(emailSenderConfig.getUsermail());
+            et_sender_email_password.setText(emailSenderConfig.getPassword());
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setTitle("编辑发送邮箱账户");
+            builder.setView(view);
+            builder.setPositiveButton("保存", (dialog, which) -> {
+                dialog.dismiss();
+                emailSenderConfig.setServerHost(et_server_host.getText().toString());
+                emailSenderConfig.setServerPort(Integer.parseInt(et_server_port.getText().toString()));
+                emailSenderConfig.setSocketFactoryPort(Integer.parseInt(et_socket_factory_port.getText().toString()));
+                emailSenderConfig.setAutenticationEnabled(cb_autentication.isChecked());
+                emailSenderConfig.setUsermail(et_sender_email.getText().toString());
+                emailSenderConfig.setPassword(et_sender_email_password.getText().toString());
+                ObjectSerializationUtil.getInstance(context).saveObject(Constants.EmailSenderConfig_FILE_NAME, emailSenderConfig);
+            });
+            builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+            builder.create().show();
+        }).getObject(Constants.EmailSenderConfig_FILE_NAME);
     }
 }

@@ -71,6 +71,10 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
+    public void toast(CharSequence text) {
+        toast(this, text, Toast.LENGTH_SHORT);
+    }
+
     private Toast mToast;
 
     public void toast(Context context, CharSequence text, int length) {

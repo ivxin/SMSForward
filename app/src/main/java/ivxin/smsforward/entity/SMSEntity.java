@@ -14,6 +14,7 @@ public class SMSEntity extends DisplayableEntity {
     private long receivedTime;
     private boolean isForwarded;
     private String isStar;
+    private String receiver_email;
 
     public String getId() {
         return id;
@@ -85,5 +86,13 @@ public class SMSEntity extends DisplayableEntity {
 
     public void setStar(String star) {
         isStar = star;
+    }
+
+    public String getReceiver_email() {
+        return receiver_email;
+    }
+
+    public void setReceiver_email(String receiver_email) {
+        this.receiver_email = receiver_email;
     }
 }

@@ -7,6 +7,8 @@ import android.os.Build;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import ivxin.smsforward.entity.EmailSenderConfig;
+
 /**
  * Created by yaping.wang on 2017/9/18.
  */
@@ -33,8 +35,12 @@ public class Constants {
 
     public static final String SMS_FORWARD = "SMS_FORWARD";
     public static final String EMAIL_FORWARD = "EMAIL_FORWARD";
+    public static final String CONTENT_IN_SUBJECT = "CONTENT_IN_SUBJECT";
 
     public static final String EMAIL_TARGET_KEY = "EMAIL_TARGET_KEY";
+
+    public static EmailSenderConfig emailSenderConfig;
+
 
     /**
      * 返回当前程序版本名

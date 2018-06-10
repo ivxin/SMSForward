@@ -15,7 +15,7 @@ import ivxin.smsforward.utils.StringUtils;
  */
 
 public class DBService {
-    DBconnHelper dbh;
+    private final DBconnHelper dbh;
 
     public DBService(Context context) {
         dbh = new DBconnHelper(context);
@@ -32,6 +32,7 @@ public class DBService {
             sms.setSender(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("sender_address"))));
             sms.setContent(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("content"))));
             sms.setReceiver(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver"))));
+            sms.setReceiver_email(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver_email"))));
             sms.setForwarded(Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded"))));
             sms.setStar(c.getString(c.getColumnIndex("is_star")));
             list.add(sms);
@@ -51,6 +52,7 @@ public class DBService {
             sms.setSender(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("sender_address"))));
             sms.setContent(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("content"))));
             sms.setReceiver(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver"))));
+            sms.setReceiver_email(StringUtils.decryptBASE64(c.getString(c.getColumnIndex("receiver_email"))));
             sms.setStar(c.getString(c.getColumnIndex("is_star")));
             boolean isSent = Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded")));
             sms.setForwarded(isSent);
@@ -68,10 +70,11 @@ public class DBService {
         String sender = StringUtils.encryptBASE64(sms.getSender());
         String content = StringUtils.encryptBASE64(sms.getContent());
         String receiver = StringUtils.encryptBASE64(sms.getReceiver());
+        String receiver_email = StringUtils.encryptBASE64(sms.getReceiver_email());
         String is_star = sms.isStar();
         boolean isForwarded = sms.isForwarded();
-        db.execSQL("insert into sms (received_time,sender_address,content,receiver,is_forwarded,is_star)values(?,?,?,?,?,?)",
-                new String[]{receivedTime, sender, content, receiver, isForwarded + "", is_star});
+        db.execSQL("insert into sms (received_time,sender_address,content,receiver,receiver_email,is_forwarded,is_star)values(?,?,?,?,?,?,?)",
+                new String[]{receivedTime, sender, content, receiver,receiver_email, isForwarded + "", is_star});
         db.close();
     }
 
@@ -106,6 +109,7 @@ public class DBService {
             sms.setSender(c.getString(c.getColumnIndex("sender_address")));
             sms.setContent(c.getString(c.getColumnIndex("content")));
             sms.setReceiver(c.getString(c.getColumnIndex("receiver")));
+            sms.setReceiver_email(c.getString(c.getColumnIndex("receiver_email")));
             sms.setForwarded(Boolean.parseBoolean(c.getString(c.getColumnIndex("is_forwarded"))));
             sms.setStar(c.getString(c.getColumnIndex("is_star")));
             list.add(sms);

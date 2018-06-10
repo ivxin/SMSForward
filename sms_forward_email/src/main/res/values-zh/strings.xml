@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">短信邮件转发</string>
+    <string name="clear_log">清空记录</string>
+    <string name="sender">发信人</string>
+    <string name="senderemailaddress">发信邮箱地址</string>
+    <string name="senderemailpassword">发信邮箱密码</string>
+    <string name="sender_server_config">发信邮箱服务配置</string>
+    <string name="serverhost">服务器地址</string>
+    <string name="serverport">服务器端口</string>
+    <string name="socketfactoryport">Socket加密端口</string>
+    <string name="autenticationenabled">是否加密验证</string>
+    <string name="receiver">收信人</string>
+    <string name="receiveremailaddress">收信人邮箱</string>
+    <string name="sms_content_send_via_email_subject_for_email_filter">短信内容是否通过邮件主题发送(便于邮件过滤)</string>
+    <string name="send_a_test_email">发送测试邮件</string>
+    <string name="show_running_notification">显示运行中通知</string>
+    <string name="start_service">启动服务</string>
+    <string name="stop_and_edit_config">停止 去配置</string>
+    <string name="press_again_to_exit">再按一次退出</string>
+    <string name="delete_this_log">删除这条记录？</string>
+    <string name="yes">是</string>
+    <string name="no">不</string>
+    <string name="need_permission"><![CDATA[>>>需要权限<<<!!!]]></string>
+    <string name="delete_all_log">删除全部记录？</string>
+    <string name="time_out">超时</string>
+    <string name="app_is_running">%s 正在运行</string>
+    <string name="app_running_tip">所有短信会转发到 [%s]</string>
+    <string name="app_started">短信邮件转发启动了！</string>
+    <string name="full_address">完整邮箱地址</string>
+    <string name="password">密码/授权码</string>
+    <string name="check_tip">如果短信包含字符 \'check\', 设备状态会附加在邮件内容中</string>
+</resources>

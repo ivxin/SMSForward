@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMS Forward Via Email</string>
+    <string name="clear_log">Clear Log</string>
+    <string name="sender">Sender</string>
+    <string name="senderemailaddress">SenderEmailAddress</string>
+    <string name="senderemailpassword">SenderEmailPassword</string>
+    <string name="sender_server_config">Sender Server Config</string>
+    <string name="serverhost">ServerHost</string>
+    <string name="serverport">ServerPort</string>
+    <string name="socketfactoryport">SocketFactoryPort</string>
+    <string name="autenticationenabled">AutenticationEnabled</string>
+    <string name="receiver">Receiver</string>
+    <string name="receiveremailaddress">ReceiverEmailAddress</string>
+    <string name="sms_content_send_via_email_subject_for_email_filter">SMS Content Send Via Email Subject(For Email Filter)</string>
+    <string name="send_a_test_email">Send A Test Email</string>
+    <string name="show_running_notification">Show Running Notification</string>
+    <string name="start_service">Start Service</string>
+    <string name="stop_and_edit_config">Stop and Edit Config</string>
+    <string name="press_again_to_exit">Press again to exit</string>
+    <string name="delete_this_log">Delete This Log?</string>
+    <string name="yes">YES</string>
+    <string name="no">NO</string>
+    <string name="need_permission"><![CDATA[>>>NEED PERMISSIONS<<<!!!]]></string>
+    <string name="delete_all_log">Delete All Mail Log?</string>
+    <string name="time_out">time out</string>
+    <string name="app_is_running">%s is Running</string>
+    <string name="app_running_tip">All SMS will forward to [%s]</string>
+    <string name="app_started">SMS forward started!</string>
+    <string name="full_address">full address</string>
+    <string name="password">password/authorization code</string>
+    <string name="check_tip">If SMS contains word \'check\', device state will append to email content.</string>
+</resources>

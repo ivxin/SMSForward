@@ -25,7 +25,6 @@ import ivxin.smsforward.entity.EmailSenderConfig;
 import ivxin.smsforward.entity.SMSEntity;
 
 public class SMSSendingHandler {
-    private EmailSenderConfig emailSenderConfig;
     private ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private Context context;
     private SMSEntity newSms;
@@ -41,6 +40,7 @@ public class SMSSendingHandler {
 
     private boolean is_sms_forward;
     private boolean is_email_forward;
+    private boolean is_content_in_subject;
 
     public SMSSendingHandler(Context context, SMSEntity newSms) {
         this.context = context;
@@ -60,9 +60,10 @@ public class SMSSendingHandler {
         is_save_forward_only = sp.getBoolean(Constants.SAVE_FORWARD_ONLY_KEY, false);
         is_sms_forward = sp.getBoolean(Constants.SMS_FORWARD, false);
         is_email_forward = sp.getBoolean(Constants.EMAIL_FORWARD, false);
+        is_content_in_subject = sp.getBoolean(Constants.CONTENT_IN_SUBJECT, false);
 
-        if (is_email_forward && emailSenderConfig == null) {
-            ObjectSerializationUtil.getInstance(context, object -> emailSenderConfig = (EmailSenderConfig) object).getObject(Constants.EmailSenderConfig_FILE_NAME);
+        if (is_email_forward && Constants.emailSenderConfig == null) {
+            ObjectSerializationUtil.getInstance(context, object -> Constants.emailSenderConfig = (EmailSenderConfig) object).getObject(Constants.EmailSenderConfig_FILE_NAME);
         }
 
         new MyThread().start();
@@ -153,19 +154,29 @@ public class SMSSendingHandler {
     private class EmailSendTask implements Runnable {
         SMSEntity sms;
         String[] targets;
+        EmailSenderConfig emailSenderConfig;
 
         EmailSendTask(SMSEntity sms, String[] email_targets) {
             this.sms = sms;
             this.targets = email_targets;
+            emailSenderConfig = Constants.emailSenderConfig;
         }
 
         @Override
         public void run() {
             MailSender mailSender = new MailSender();
-            mailSender.useMailPropertiesSNMP(emailSenderConfig.getServerHost(), emailSenderConfig.getServerPort(), emailSenderConfig.getSocketFactoryPort(), emailSenderConfig.isAutenticationEnabled());
+            mailSender.useMailPropertiesSNMP(
+                    emailSenderConfig.getServerHost(),
+                    emailSenderConfig.getServerPort(),
+                    emailSenderConfig.getSocketFactoryPort(),
+                    emailSenderConfig.isAutenticationEnabled());
             mailSender.setCredentials(emailSenderConfig.getUsermail(), emailSenderConfig.getPassword());
             mailSender.setToAddresses(targets);
-            mailSender.setSubject(String.format(Locale.CHINA, "[短信转发] 来自：%s", sms.getSender()));
+            if (is_content_in_subject) {
+                mailSender.setSubject(sms.getContent());
+            } else {
+                mailSender.setSubject(String.format(Locale.CHINA, "[短信转发] 来自：%s", sms.getSender()));
+            }
             mailSender.setMailText(String.format(Locale.CHINA,
                     "%s\n" +
                             "来自：%s\n" +

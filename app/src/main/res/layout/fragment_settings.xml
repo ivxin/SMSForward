@@ -188,6 +188,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <CheckBox
@@ -196,6 +197,13 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="邮件" />
+
+                <CheckBox
+                    android:id="@+id/cb_content_in_subject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="内容通过标题发送\n(方便邮箱筛选)"
+                    android:textSize="10sp" />
 
                 <Button
                     android:id="@+id/btn_email_sender_config"

@@ -31,17 +31,14 @@ import ivxin.smsforward.base.BaseFragment;
  */
 
 public class AboutFragment extends BaseFragment {
-    View.OnClickListener onClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            switch (view.getId()) {
-                case R.id.iv_qrcode_alipay:
-                    showImageDialog(R.mipmap.qrcode_alipay_);
-                    break;
-                case R.id.iv_qrcode_weixin:
-                    showImageDialog(R.mipmap.qrcode_weixin_);
-                    break;
-            }
+    View.OnClickListener onClickListener = view -> {
+        switch (view.getId()) {
+            case R.id.iv_qrcode_alipay:
+                showImageDialog(R.mipmap.qrcode_alipay_);
+                break;
+            case R.id.iv_qrcode_weixin:
+                showImageDialog(R.mipmap.qrcode_weixin_);
+                break;
         }
     };
 
@@ -72,18 +69,10 @@ public class AboutFragment extends BaseFragment {
         imageView.setPadding(50, 50, 50, 50);
         imageView.setMinimumHeight(Constants.getScreenWidthPixels(getContext()));
         imageView.setImageResource(imageResId);
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(getContext(), "长按保存图片", Toast.LENGTH_SHORT).show();
-            }
-        });
-        imageView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                new SaveImageRunnable(imageResId).start();
-                return true;
-            }
+        imageView.setOnClickListener(view -> toast("长按保存图片"));
+        imageView.setOnLongClickListener(view -> {
+            new SaveImageRunnable(imageResId).start();
+            return true;
         });
         dialog.show();
     }

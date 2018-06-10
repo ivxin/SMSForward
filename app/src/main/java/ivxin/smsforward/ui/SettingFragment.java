@@ -41,7 +41,6 @@ import ivxin.smsforward.utils.ObjectSerializationUtil;
 
 public class SettingFragment extends BaseFragment implements View.OnClickListener {
     private static final int CONTACTS = 91;
-    private EmailSenderConfig emailSenderConfig;
     private Context context;
     private TextView tv_number_rex;
     private Button btn_delete_number_rex;
@@ -59,6 +58,7 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     private LinearLayout ll_forward_sms;
 
     private CheckBox cb_forward_email;
+    private CheckBox cb_content_in_subject;
     private LinearLayout ll_forward_email;
     private Button btn_email_sender_config;
     private TextView tv_email_address;
@@ -102,20 +102,21 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
 
         cb_forward_email = view.findViewById(R.id.cb_forward_email);
         ll_forward_email = view.findViewById(R.id.ll_forward_email);
+        cb_content_in_subject = view.findViewById(R.id.cb_content_in_subject);
         btn_email_sender_config = view.findViewById(R.id.btn_email_sender_config);
         tv_email_address = view.findViewById(R.id.tv_email_address);
         btn_delete_email = view.findViewById(R.id.btn_delete_email);
         btn_add_email = view.findViewById(R.id.btn_add_email);
 
         setDataFromSP();
-        tb_switcher.setOnCheckedChangeListener((compoundButton, b) ->
-                sp.edit().putBoolean(Constants.STARTED_KEY, b).apply());
-        tb_save_sms.setOnCheckedChangeListener((compoundButton, b) -> {
-            sp.edit().putBoolean(Constants.SAVE_SMS_KEY, b).apply();
-            tb_save_sms_forward.setVisibility(b ? View.VISIBLE : View.GONE);
+        tb_switcher.setOnCheckedChangeListener((compoundButton, isChecked) ->
+                sp.edit().putBoolean(Constants.STARTED_KEY, isChecked).apply());
+        tb_save_sms.setOnCheckedChangeListener((compoundButton, isChecked) -> {
+            sp.edit().putBoolean(Constants.SAVE_SMS_KEY, isChecked).apply();
+            tb_save_sms_forward.setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
-        tb_save_sms_forward.setOnCheckedChangeListener((compoundButton, b) ->
-                sp.edit().putBoolean(Constants.SAVE_FORWARD_ONLY_KEY, b).apply());
+        tb_save_sms_forward.setOnCheckedChangeListener((compoundButton, isChecked) ->
+                sp.edit().putBoolean(Constants.SAVE_FORWARD_ONLY_KEY, isChecked).apply());
         btn_add_number_rex.setOnClickListener(this);
         btn_add_content_rex.setOnClickListener(this);
         btn_add_receiver_number.setOnClickListener(this);
@@ -138,6 +139,7 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
             ll_forward_email.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             sp.edit().putBoolean(Constants.EMAIL_FORWARD, isChecked).apply();
         });
+        cb_content_in_subject.setOnCheckedChangeListener((buttonView, isChecked) -> sp.edit().putBoolean(Constants.CONTENT_IN_SUBJECT, isChecked).apply());
         btn_delete_email.setOnClickListener(this);
         btn_add_email.setOnClickListener(this);
 
@@ -156,6 +158,7 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
 
         cb_forward_sms.setChecked(sp.getBoolean(Constants.SMS_FORWARD, false));
         cb_forward_email.setChecked(sp.getBoolean(Constants.EMAIL_FORWARD, false));
+        cb_content_in_subject.setChecked(sp.getBoolean(Constants.CONTENT_IN_SUBJECT, false));
         ll_forward_sms.setVisibility(cb_forward_sms.isChecked() ? View.VISIBLE : View.GONE);
         ll_forward_email.setVisibility(cb_forward_email.isChecked() ? View.VISIBLE : View.GONE);
         tv_email_address.setText(sp.getString(Constants.EMAIL_TARGET_KEY, ""));
@@ -388,9 +391,9 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
     private void showEmailSenderConfigEditDialog() {
         ObjectSerializationUtil.getInstance(context, object -> {
             if (object == null) {
-                emailSenderConfig = new EmailSenderConfig();
+                Constants.emailSenderConfig = new EmailSenderConfig();
             } else {
-                emailSenderConfig = (EmailSenderConfig) object;
+                Constants.emailSenderConfig = (EmailSenderConfig) object;
             }
             View view = View.inflate(context, R.layout.layout_email_setting_dialog, null);
             EditText et_server_host = (EditText) view.findViewById(R.id.et_server_host);
@@ -400,25 +403,25 @@ public class SettingFragment extends BaseFragment implements View.OnClickListene
             EditText et_sender_email = (EditText) view.findViewById(R.id.et_sender_email);
             EditText et_sender_email_password = (EditText) view.findViewById(R.id.et_sender_email_password);
 
-            et_server_host.setText(emailSenderConfig.getServerHost());
-            et_server_port.setText(String.valueOf(emailSenderConfig.getServerPort()));
-            et_socket_factory_port.setText(String.valueOf(emailSenderConfig.getSocketFactoryPort()));
-            cb_autentication.setChecked(emailSenderConfig.isAutenticationEnabled());
-            et_sender_email.setText(emailSenderConfig.getUsermail());
-            et_sender_email_password.setText(emailSenderConfig.getPassword());
+            et_server_host.setText(Constants.emailSenderConfig.getServerHost());
+            et_server_port.setText(String.valueOf(Constants.emailSenderConfig.getServerPort()));
+            et_socket_factory_port.setText(String.valueOf(Constants.emailSenderConfig.getSocketFactoryPort()));
+            cb_autentication.setChecked(Constants.emailSenderConfig.isAutenticationEnabled());
+            et_sender_email.setText(Constants.emailSenderConfig.getUsermail());
+            et_sender_email_password.setText(Constants.emailSenderConfig.getPassword());
 
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             builder.setTitle("编辑发送邮箱账户");
             builder.setView(view);
             builder.setPositiveButton("保存", (dialog, which) -> {
                 dialog.dismiss();
-                emailSenderConfig.setServerHost(et_server_host.getText().toString());
-                emailSenderConfig.setServerPort(Integer.parseInt(et_server_port.getText().toString()));
-                emailSenderConfig.setSocketFactoryPort(Integer.parseInt(et_socket_factory_port.getText().toString()));
-                emailSenderConfig.setAutenticationEnabled(cb_autentication.isChecked());
-                emailSenderConfig.setUsermail(et_sender_email.getText().toString());
-                emailSenderConfig.setPassword(et_sender_email_password.getText().toString());
-                ObjectSerializationUtil.getInstance(context).saveObject(Constants.EmailSenderConfig_FILE_NAME, emailSenderConfig);
+                Constants.emailSenderConfig.setServerHost(et_server_host.getText().toString());
+                Constants.emailSenderConfig.setServerPort(Integer.parseInt(et_server_port.getText().toString()));
+                Constants.emailSenderConfig.setSocketFactoryPort(Integer.parseInt(et_socket_factory_port.getText().toString()));
+                Constants.emailSenderConfig.setAutenticationEnabled(cb_autentication.isChecked());
+                Constants.emailSenderConfig.setUsermail(et_sender_email.getText().toString());
+                Constants.emailSenderConfig.setPassword(et_sender_email_password.getText().toString());
+                ObjectSerializationUtil.getInstance(context).saveObject(Constants.EmailSenderConfig_FILE_NAME, Constants.emailSenderConfig);
             });
             builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
             builder.create().show();

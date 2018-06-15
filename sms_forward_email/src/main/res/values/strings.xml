@@ -30,4 +30,5 @@
     <string name="full_address">full address</string>
     <string name="password">password/authorization code</string>
     <string name="check_tip">If SMS contains word \'check\', device state will append to email content.</string>
+    <string name="keep_screen_on">Keep Screen On</string>
 </resources>

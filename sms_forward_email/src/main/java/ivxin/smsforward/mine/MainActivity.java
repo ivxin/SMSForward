@@ -17,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -76,6 +77,7 @@ public class MainActivity extends BaseActivity {
     private CheckBox cb_show_running_notification;
     private Button btn_test_email;
 
+    private CheckBox cb_keep_screen_on;
     private ToggleButton btn_edit_config;
 
     private TextView tv_clock;
@@ -157,12 +159,18 @@ public class MainActivity extends BaseActivity {
             public void onSuccess(MailEntity mailEntity) {
                 DataBaseService dataBaseService = new DataBaseService(activity);
                 dataBaseService.insertMail(mailEntity);
-                runOnUiThread(() -> getMailData());
+                runOnUiThread(() -> {
+                    if (isFinishing()) {
+                        return;
+                    }
+                    showMessageDialog("", String.format(Locale.CHINA, "Send to %s succeed!", mailEntity.getReceiver()));
+                    getMailData();
+                });
             }
 
             @Override
             public void onFail(Exception e) {
-                toast(e.getMessage());
+                runOnUiThread(() -> toast("Failed:" + e.getMessage()));
             }
         });
     }
@@ -267,6 +275,7 @@ public class MainActivity extends BaseActivity {
         cb_content_send_via_subject = (CheckBox) findViewById(R.id.cb_content_send_via_subject);
         cb_show_running_notification = (CheckBox) findViewById(R.id.cb_show_running_notification);
         btn_test_email = (Button) findViewById(R.id.btn_test_email);
+        cb_keep_screen_on = (CheckBox) findViewById(R.id.cb_keep_screen_on);
         btn_edit_config = (ToggleButton) findViewById(R.id.btn_edit_config);
 
         if (sdkBelow17) {
@@ -342,7 +351,6 @@ public class MainActivity extends BaseActivity {
         btn_test_email.setOnClickListener(v -> {
             saveConfig();
             MailSenderHelper.sendTestEmail();
-            showMessageDialog("", "Test Mail Sent!");
         });
         tv_clear_log.setOnClickListener(v -> {
             showConfirmDialog("", getString(R.string.delete_all_log), getString(R.string.yes), (dialog, which) -> {
@@ -354,6 +362,9 @@ public class MainActivity extends BaseActivity {
             }, getString(R.string.no), (dialog, which) -> dialog.dismiss());
 
         });
+        cb_keep_screen_on.setOnCheckedChangeListener((buttonView, isChecked) ->
+                getWindow().setFlags(isChecked ? WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON : 0, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        );
     }
 
     private class PingUIRunnable implements Runnable {

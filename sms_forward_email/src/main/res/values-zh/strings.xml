@@ -30,4 +30,5 @@
     <string name="full_address">完整邮箱地址</string>
     <string name="password">密码/授权码</string>
     <string name="check_tip">如果短信包含字符 \'check\', 设备状态会附加在邮件内容中</string>
+    <string name="keep_screen_on">保持屏幕常亮</string>
 </resources>

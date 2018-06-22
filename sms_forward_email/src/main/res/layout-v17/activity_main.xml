@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -14,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:visibility="visible">
+            android:visibility="gone">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -111,7 +113,9 @@
             <android.support.v7.widget.RecyclerView
                 android:id="@+id/rv_mail_send_log"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_mail" />
 
         </LinearLayout>
 
@@ -121,7 +125,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:visibility="gone">
+            android:visibility="visible">
 
             <TableLayout
                 android:layout_width="match_parent"
@@ -260,6 +264,22 @@
                     android:layout_weight="1"
                     android:checked="true"
                     android:text="@string/sms_content_send_via_email_subject_for_email_filter"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp" />
+
+                <CheckBox
+                    android:id="@+id/cb_send_incoming_call"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="@string/send_in_coming_call_mail"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp" />
+
+                <CheckBox
+                    android:id="@+id/cb_reject_incoming_call"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="@string/reject_in_coming_calls"
                     android:textColor="@android:color/black"
                     android:textSize="12sp" />
 

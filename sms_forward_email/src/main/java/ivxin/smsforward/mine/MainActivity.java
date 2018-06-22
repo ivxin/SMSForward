@@ -31,6 +31,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.chad.library.adapter.base.loadmore.LoadMoreView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import ivxin.smsforward.mine.utils.MailSenderHelper;
 import ivxin.smsforward.mine.utils.PingUtil;
 import ivxin.smsforward.mine.utils.SignalUtil;
 import ivxin.smsforward.mine.view.EmailAdapter;
+import ivxin.smsforward.mine.view.MailLoadMoreView;
 
 public class MainActivity extends BaseActivity {
     public static final boolean sdkBelow17 = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
@@ -74,6 +76,8 @@ public class MainActivity extends BaseActivity {
     private EditText et_receiver_email;
 
     private CheckBox cb_content_send_via_subject;
+    private CheckBox cb_send_incoming_call;
+    private CheckBox cb_reject_incoming_call;
     private CheckBox cb_show_running_notification;
     private Button btn_test_email;
 
@@ -85,13 +89,15 @@ public class MainActivity extends BaseActivity {
 
     private EmailAdapter adapter;
     private List<MailEntity> list = new ArrayList<>();
+    private int page = 0;
+    private final int pageSize = 10;
 
     private TelephonyManager mTelephonyManager;
     private SignalUtil.SignalListener mListener;
     private int signalType;
     private NotificationManager mNotificationManager;
 
-    private BroadcastReceiver mBatInfoReveiver = new BroadcastReceiver() {
+    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -144,7 +150,8 @@ public class MainActivity extends BaseActivity {
         initView();
         getPermission();
         registerReceivers();
-        getMailData();
+        page = 0;
+        getMailData(page);
         SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, timestampMillis) -> {
             SMSEntity smsEntity = new SMSEntity();
             smsEntity.setContent(content);
@@ -163,8 +170,9 @@ public class MainActivity extends BaseActivity {
                     if (isFinishing()) {
                         return;
                     }
-                    showMessageDialog("", String.format(Locale.CHINA, "Send to %s succeed!", mailEntity.getReceiver()));
-                    getMailData();
+                    showMessageDialog("", String.format(Locale.CHINA, "Send to %s succeed!", mailEntity.getReceiver()), 3000);
+                    page = 0;
+                    getMailData(page);
                 });
             }
 
@@ -178,10 +186,26 @@ public class MainActivity extends BaseActivity {
     private void registerReceivers() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        registerReceiver(mBatInfoReveiver, intentFilter);
+        registerReceiver(mBatInfoReceiver, intentFilter);
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> this.signalType = signalType);
-        mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS);
+        mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> this.signalType = signalType, incomingNumber -> {
+            if (Constants.started) {
+                if (Constants.rejectIncomingCalls) {
+                    SignalUtil.endcall(MainActivity.this);
+                }
+                if (Constants.incomingCallMail) {
+                    String mailText = "Incoming call from " + incomingNumber;
+                    String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
+                    mailText = mailText.concat(deviceState);
+                    MailEntity mailEntity = new MailEntity();
+                    mailEntity.setReceiver(Constants.receiverEmail);
+                    mailEntity.setSubject("[SMS Forward] Incoming call from " + incomingNumber);
+                    mailEntity.setContent(mailText);
+                    mailEntity.setSendTime(System.currentTimeMillis());
+                    MailSenderHelper.sendEmail(mailEntity);
+                }
+            }
+        });
     }
 
     @Override
@@ -196,32 +220,40 @@ public class MainActivity extends BaseActivity {
                 hideOnGoingNotification();
             }
         }
-        mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS);
+        if (Constants.HAVE_PERMISSION)
+            mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS |
+                    SignalUtil.SignalListener.LISTEN_CALL_STATE);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         PingUtil.stopPing();
-        mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         PingUtil.stopPing();
-        unregisterReceiver(mBatInfoReveiver);
+        mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
+        unregisterReceiver(mBatInfoReceiver);
     }
 
-    private void getMailData() {
+    private void getMailData(int pageIndex) {
         new Thread(() -> {
             DataBaseService dataBaseService = new DataBaseService(activity);
-            List<MailEntity> dataList = dataBaseService.selectMailList();
+            List<MailEntity> dataList = dataBaseService.selectMailList(pageIndex, pageSize);
             if (dataList != null && dataList.size() > 0) {
                 runOnUiThread(() -> {
-                    list.clear();
+                    if (pageIndex == 0) {
+                        list.clear();
+                    }
                     list.addAll(dataList);
-                    adapter.notifyDataSetChanged();
+                    if (dataList.size() < pageSize) {
+                        adapter.loadMoreEnd(true);
+                    } else {
+                        adapter.loadMoreComplete();
+                    }
                 });
             }
         }).start();
@@ -229,16 +261,20 @@ public class MainActivity extends BaseActivity {
 
     private void getPermission() {
         checkPermissions(new OnPermissionCheckedListener() {
-            @Override
-            public void onPermissionGranted(String permission) {
-                Constants.HAVE_PERMISSION = true;
-            }
+                             @Override
+                             public void onPermissionGranted(String permission) {
+                                 Constants.HAVE_PERMISSION = true;
+                             }
 
-            @Override
-            public void onPermissionDenied(String permission) {
-                Constants.HAVE_PERMISSION = false;
-            }
-        }, Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.INTERNET);
+                             @Override
+                             public void onPermissionDenied(String permission) {
+                                 Constants.HAVE_PERMISSION = false;
+                             }
+                         }, Manifest.permission.RECEIVE_SMS,
+                Manifest.permission.SEND_SMS,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.CALL_PHONE,
+                Manifest.permission.READ_PHONE_STATE);
     }
 
     @Override
@@ -273,6 +309,8 @@ public class MainActivity extends BaseActivity {
 
         et_receiver_email = (EditText) findViewById(R.id.et_receiver_email);
         cb_content_send_via_subject = (CheckBox) findViewById(R.id.cb_content_send_via_subject);
+        cb_send_incoming_call = (CheckBox) findViewById(R.id.cb_send_incoming_call);
+        cb_reject_incoming_call = (CheckBox) findViewById(R.id.cb_reject_incoming_call);
         cb_show_running_notification = (CheckBox) findViewById(R.id.cb_show_running_notification);
         btn_test_email = (Button) findViewById(R.id.btn_test_email);
         cb_keep_screen_on = (CheckBox) findViewById(R.id.cb_keep_screen_on);
@@ -296,7 +334,12 @@ public class MainActivity extends BaseActivity {
         rv_mail_send_log.setLayoutManager(new LinearLayoutManager(this));
         adapter = new EmailAdapter(R.layout.item_mail, list);
         adapter.openLoadAnimation(BaseQuickAdapter.ALPHAIN);
+        adapter.setEnableLoadMore(true);
+        LoadMoreView loadMoreView = new MailLoadMoreView();
+        adapter.setLoadMoreView(loadMoreView);
+        adapter.setOnLoadMoreListener(() -> getMailData(++page), rv_mail_send_log);
         rv_mail_send_log.setAdapter(adapter);
+        adapter.disableLoadMoreIfNotFullPage();
         adapter.setOnItemClickListener((adapter, view, position) -> {
             MailEntity mailEntity = list.get(position);
             if (mailEntity != null) {
@@ -320,6 +363,8 @@ public class MainActivity extends BaseActivity {
         cb_show_running_notification.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.showRunningNotification = isChecked);
         cb_autentication.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.autenticationEnabled = isChecked);
         cb_content_send_via_subject.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.isContentInSubject = isChecked);
+        cb_send_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.incomingCallMail = isChecked);
+        cb_reject_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.rejectIncomingCalls = isChecked);
         btn_edit_config.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -499,6 +544,8 @@ public class MainActivity extends BaseActivity {
         et_receiver_email.setText(Constants.receiverEmail);
         btn_edit_config.setChecked(Constants.started);
         cb_content_send_via_subject.setChecked(Constants.isContentInSubject);
+        cb_send_incoming_call.setChecked(Constants.incomingCallMail);
+        cb_reject_incoming_call.setChecked(Constants.rejectIncomingCalls);
     }
 
     private void saveConfig() {
@@ -513,6 +560,8 @@ public class MainActivity extends BaseActivity {
         Constants.receiverEmail = et_receiver_email.getText().toString().trim();
         Constants.started = btn_edit_config.isChecked();
         Constants.isContentInSubject = cb_content_send_via_subject.isChecked();
+        Constants.incomingCallMail = cb_send_incoming_call.isChecked();
+        Constants.rejectIncomingCalls = cb_reject_incoming_call.isChecked();
         Constants.showRunningNotification = cb_show_running_notification.isChecked();
         Constants.saveConfigToSP(activity);
     }

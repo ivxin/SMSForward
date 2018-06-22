@@ -12,28 +12,59 @@ import ivxin.smsforward.mine.entity.SMSEntity;
 public class MailSenderHelper {
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private static OnMailSentCallback onMailSentCallback;
+    private static SimpleDateFormat sdf = new SimpleDateFormat(Constants.PATTERN, Locale.CHINA);
 
     public static void sendEmail(SMSEntity sms) {
-        if (Constants.started)
-            singleThreadExecutor.execute(new EmailSendTask(sms));
+        if (Constants.started) {
+            String mailText = String.format(Locale.CHINA,
+                    "%s\n\n" +
+                            "SMS From:%s\n" +
+                            "SMS ReceiverCard:Card %d\n" +
+                            "SMS ReceiveTime:%s\n" +
+                            "Mail SendTime:%s\n" +
+                            "Device:%s\n",
+                    sms.getContent(),
+                    sms.getSender(),
+                    sms.getReceiverCard(),
+                    sdf.format(sms.getReceivedTime()),
+                    sdf.format(sms.getSendTime()),
+                    android.os.Build.BRAND + " " + android.os.Build.MODEL);
+            String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[SMS Forward] From:%s\n", sms.getSender());
+            if (mailText.contains("check")) {
+                String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
+                mailText = mailText.concat(deviceState);
+            }
+            MailEntity mailEntity = new MailEntity();
+            mailEntity.setSendTime(System.currentTimeMillis());
+            mailEntity.setContent(mailText);
+            mailEntity.setSubject(subject);
+            mailEntity.setReceiver(Constants.receiverEmail);
+            sendEmail(mailEntity);
+        }
+    }
+
+    public static void sendEmail(MailEntity mailEntity) {
+        singleThreadExecutor.execute(new EmailSendTask(mailEntity));
     }
 
     public static void sendTestEmail() {
-        SMSEntity smsEntity = new SMSEntity();
-        smsEntity.setContent("TEST EMAIL");
-        smsEntity.setSender("[SENDER]");
-        smsEntity.setReceivedTime(System.currentTimeMillis());
-        smsEntity.setSendTime(System.currentTimeMillis());
-        singleThreadExecutor.execute(new EmailSendTask(smsEntity));
+        String mailText = "TEST MAIL CONTENT";
+        String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
+        mailText = mailText.concat(deviceState);
+        MailEntity mailEntity = new MailEntity();
+        mailEntity.setSendTime(System.currentTimeMillis());
+        mailEntity.setSubject("TEST MAIL SUBJECT");
+        mailEntity.setContent(mailText);
+        mailEntity.setReceiver(Constants.receiverEmail);
+        singleThreadExecutor.execute(new EmailSendTask(mailEntity));
     }
 
 
     private static class EmailSendTask implements Runnable {
-        private SimpleDateFormat sdf = new SimpleDateFormat(Constants.PATTERN, Locale.CHINA);
-        private SMSEntity sms;
+        private MailEntity mailEntity;
 
-        EmailSendTask(SMSEntity sms) {
-            this.sms = sms;
+        EmailSendTask(MailEntity mailEntity) {
+            this.mailEntity = mailEntity;
         }
 
         @Override
@@ -47,34 +78,10 @@ public class MailSenderHelper {
                         Constants.autenticationEnabled);
                 mailSender.setCredentials(Constants.senderEmail, Constants.senderEmailPassword);
                 mailSender.setToAddresses(new String[]{Constants.receiverEmail});
-                String mailText = String.format(Locale.CHINA,
-                        "%s\n\n" +
-                                "SMS From:%s\n" +
-                                "SMS ReceiverCard:Card %d\n" +
-                                "SMS ReceiveTime:%s\n" +
-                                "Mail SendTime:%s\n" +
-                                "Device:%s\n",
-                        sms.getContent(),
-                        sms.getSender(),
-                        sms.getReceiverCard(),
-                        sdf.format(sms.getReceivedTime()),
-                        sdf.format(sms.getSendTime()),
-                        android.os.Build.BRAND + " " + android.os.Build.MODEL);
-                String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[SMS Forward] From:%s\n", sms.getSender());
-
-                mailSender.setSubject(subject);
-                if (mailText.contains("check")) {
-                    String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
-                    mailText = mailText.concat(deviceState);
-                }
-                mailSender.setMailText(mailText);
+                mailSender.setSubject(mailEntity.getSubject());
+                mailSender.setMailText(mailEntity.getContent());
                 mailSender.send();
                 if (onMailSentCallback != null) {
-                    MailEntity mailEntity = new MailEntity();
-                    mailEntity.setSendTime(System.currentTimeMillis());
-                    mailEntity.setContent(mailText);
-                    mailEntity.setSubject(subject);
-                    mailEntity.setReceiver(Constants.receiverEmail);
                     onMailSentCallback.onSuccess(mailEntity);
                 }
             } catch (Exception e) {

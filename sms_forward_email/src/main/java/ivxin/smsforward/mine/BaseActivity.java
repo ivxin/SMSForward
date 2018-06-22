@@ -72,13 +72,18 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    public void showMessageDialog(CharSequence title, CharSequence message){
-        showConfirmDialog(title, message, "OK", (dialog, which) -> dialog.dismiss(),"",null);
+    public void showMessageDialog(CharSequence title, CharSequence message) {
+        showConfirmDialog(title, message, "OK", (dialog, which) -> dialog.dismiss(), "", null);
     }
 
-    public void showConfirmDialog(CharSequence title, CharSequence message,
-                                  CharSequence positiveText, DialogInterface.OnClickListener positiveListener,
-                                  CharSequence negativeText, DialogInterface.OnClickListener negativeListener) {
+    public void showMessageDialog(CharSequence title, CharSequence message, long dismissDelay) {
+        AlertDialog alertDialog = showConfirmDialog(title, message, "OK", (dialog, which) -> dialog.dismiss(), "", null);
+        getWindow().getDecorView().postDelayed(alertDialog::dismiss, dismissDelay);
+    }
+
+    public AlertDialog showConfirmDialog(CharSequence title, CharSequence message,
+                                         CharSequence positiveText, DialogInterface.OnClickListener positiveListener,
+                                         CharSequence negativeText, DialogInterface.OnClickListener negativeListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
         builder.setMessage(message);
@@ -86,7 +91,9 @@ public class BaseActivity extends AppCompatActivity {
             builder.setPositiveButton(positiveText, positiveListener);
         if (!TextUtils.isEmpty(negativeText))
             builder.setNegativeButton(negativeText, negativeListener);
-        builder.create().show();
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        return dialog;
     }
 
     public void toast(CharSequence text) {

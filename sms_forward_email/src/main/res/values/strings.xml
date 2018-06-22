@@ -31,4 +31,9 @@
     <string name="password">password/authorization code</string>
     <string name="check_tip">If SMS contains word \'check\', device state will append to email content.</string>
     <string name="keep_screen_on">Keep Screen On</string>
+    <string name="send_in_coming_call_mail">Send In Coming Call Mail</string>
+    <string name="reject_in_coming_calls">Reject In Coming Calls</string>
+    <string name="loadmore">Load More</string>
+    <string name="loading">Loading</string>
+    <string name="loadfail">Load Fail</string>
 </resources>

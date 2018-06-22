@@ -14,6 +14,8 @@ public class Constants {
     public class SP_KEYS {
         public static final String KEY_STARTED = "KEY_STARTED";
         public static final String KEY_CONTENT_IN_SUBJECT = "KEY_CONTENT_IN_SUBJECT";
+        public static final String KEY_INCOMING_CALL_MAIL = "KEY_INCOMING_CALL_MAIL";
+        public static final String KEY_REJECT_INCOMING_CALLS = "KEY_REJECT_INCOMING_CALLS";
 
         public static final String KEY_SENDER_EMAIL = "KEY_SENDER_EMAIL";
         public static final String KEY_SENDER_PASSWORD = "KEY_SENDER_PASSWORD";
@@ -45,6 +47,8 @@ public class Constants {
 
     public static String receiverEmail = "";
     public static boolean isContentInSubject = false;
+    public static boolean incomingCallMail = false;
+    public static boolean rejectIncomingCalls = false;
     public static boolean showRunningNotification = true;
 
 
@@ -57,6 +61,8 @@ public class Constants {
         sp.edit()
                 .putBoolean(SP_KEYS.KEY_STARTED, started)
                 .putBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, isContentInSubject)
+                .putBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, incomingCallMail)
+                .putBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, rejectIncomingCalls)
                 .putString(SP_KEYS.KEY_SENDER_EMAIL, senderEmail)
                 .putString(SP_KEYS.KEY_SENDER_PASSWORD, senderEmailPassword)
                 .putString(SP_KEYS.KEY_SERVER_HOST, serverHost)
@@ -72,6 +78,8 @@ public class Constants {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(sp_file_name, Context.MODE_PRIVATE);
         started = sp.getBoolean(SP_KEYS.KEY_STARTED, false);
         isContentInSubject = sp.getBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, false);
+        incomingCallMail = sp.getBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, false);
+        rejectIncomingCalls = sp.getBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, false);
         senderEmail = sp.getString(SP_KEYS.KEY_SENDER_EMAIL, "");
         senderEmailPassword = sp.getString(SP_KEYS.KEY_SENDER_PASSWORD, "");
         serverHost = sp.getString(SP_KEYS.KEY_SERVER_HOST, "");

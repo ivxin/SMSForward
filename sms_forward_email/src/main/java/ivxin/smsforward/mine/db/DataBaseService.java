@@ -69,6 +69,26 @@ public class DataBaseService {
         return list;
     }
 
+    public List<MailEntity> selectMailList(int pageIndex, int pageSize) {
+        List<MailEntity> list = new ArrayList<>();
+        DataBaseOpenHelper dataBaseOpenHelper = new DataBaseOpenHelper(context);
+        SQLiteDatabase db = dataBaseOpenHelper.getReadableDatabase();
+        Cursor c = db.rawQuery("select * from email order by id desc limit ? offset ?",
+                new String[]{String.valueOf(pageSize), String.valueOf(pageSize * pageIndex)});
+        while (c.moveToNext()) {
+            MailEntity mailEntity = new MailEntity();
+            mailEntity.setId(c.getInt(c.getColumnIndex("id")));
+            mailEntity.setSendTime(c.getLong(c.getColumnIndex("send_time")));
+            mailEntity.setSubject(c.getString(c.getColumnIndex("subject")));
+            mailEntity.setContent(c.getString(c.getColumnIndex("content")));
+            mailEntity.setReceiver(c.getString(c.getColumnIndex("receiver")));
+            list.add(mailEntity);
+        }
+        c.close();
+        db.close();
+        return list;
+    }
+
 
     public class DataBaseOpenHelper extends SQLiteOpenHelper {
         private DataBaseOpenHelper(Context context) {

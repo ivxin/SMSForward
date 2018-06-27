@@ -10,6 +10,8 @@ import android.util.Log;
 
 import java.lang.reflect.Method;
 
+import ivxin.smsforward.mine.Constants;
+
 import static android.content.Context.TELEPHONY_SERVICE;
 
 public class SignalUtil {
@@ -47,13 +49,16 @@ public class SignalUtil {
             super.onCallStateChanged(state, incomingNumber);
             switch (state) {
                 case TelephonyManager.CALL_STATE_IDLE:
-                    Log.d(TAG, "onCallStateChanged:CALL_STATE_IDLE" + incomingNumber);
+                    Constants.isRinging = false;
+                    Log.d(TAG, "onCallStateChanged:CALL_STATE_IDLE " + incomingNumber);
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
-                    Log.d(TAG, "onCallStateChanged: CALL_STATE_OFFHOOK" + incomingNumber);
+                    Constants.isRinging = false;
+                    Log.d(TAG, "onCallStateChanged: CALL_STATE_OFFHOOK " + incomingNumber);
                     break;
                 case TelephonyManager.CALL_STATE_RINGING:
-                    Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING" + incomingNumber);
+                    Constants.isRinging = true;
+                    Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING " + incomingNumber);
                     if (onPhoneCallIncomingCallback != null) {
                         onPhoneCallIncomingCallback.onPhoneCallIncomingCallback(incomingNumber);
                     }

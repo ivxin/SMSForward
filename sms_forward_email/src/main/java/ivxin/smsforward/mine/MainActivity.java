@@ -43,6 +43,7 @@ import ivxin.smsforward.mine.entity.MailEntity;
 import ivxin.smsforward.mine.entity.SMSEntity;
 import ivxin.smsforward.mine.receiver.SMSReceiver;
 import ivxin.smsforward.mine.utils.MailSenderHelper;
+import ivxin.smsforward.mine.utils.PhoneNumberJudge;
 import ivxin.smsforward.mine.utils.PingUtil;
 import ivxin.smsforward.mine.utils.SignalUtil;
 import ivxin.smsforward.mine.view.EmailAdapter;
@@ -164,6 +165,9 @@ public class MainActivity extends BaseActivity {
         MailSenderHelper.setOnMailSentCallback(new MailSenderHelper.OnMailSentCallback() {
             @Override
             public void onSuccess(MailEntity mailEntity) {
+                if (Constants.rejectIncomingCalls && Constants.isRinging) {
+                    SignalUtil.endcall(MainActivity.this);
+                }
                 DataBaseService dataBaseService = new DataBaseService(activity);
                 dataBaseService.insertMail(mailEntity);
                 runOnUiThread(() -> {
@@ -178,6 +182,9 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onFail(Exception e) {
+                if (Constants.rejectIncomingCalls && Constants.isRinging) {
+                    SignalUtil.endcall(MainActivity.this);
+                }
                 runOnUiThread(() -> toast("Failed:" + e.getMessage()));
             }
         });
@@ -190,23 +197,22 @@ public class MainActivity extends BaseActivity {
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> this.signalType = signalType, incomingNumber -> {
             if (Constants.started) {
-                if (Constants.rejectIncomingCalls) {
-                    SignalUtil.endcall(MainActivity.this);
-                }
                 if (Constants.incomingCallMail) {
-                    String mailText = "Incoming call from " + incomingNumber;
-                    String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
-                    mailText = mailText.concat(deviceState);
-                    MailEntity mailEntity = new MailEntity();
-                    mailEntity.setReceiver(Constants.receiverEmail);
-                    mailEntity.setSubject("[SMS Forward] Incoming call from " + incomingNumber);
-                    mailEntity.setContent(mailText);
-                    mailEntity.setSendTime(System.currentTimeMillis());
-                    MailSenderHelper.sendEmail(mailEntity);
+                    PhoneNumberJudge netJudge = new PhoneNumberJudge();
+                    netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
+                        String subject = String.format(Locale.CHINA, "[SMS Forward]%s 来电", incomingNumber);
+                        MailEntity mailEntity = new MailEntity();
+                        mailEntity.setReceiver(Constants.receiverEmail);
+                        mailEntity.setSubject(subject);
+                        mailEntity.setContent("来电查询结果：" + result);
+                        mailEntity.setSendTime(System.currentTimeMillis());
+                        MailSenderHelper.sendEmail(mailEntity);
+                    });
                 }
             }
         });
     }
+
 
     @Override
     protected void onResume() {

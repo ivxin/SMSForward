@@ -55,6 +55,7 @@ public class Constants {
     public static int battery_level;
     public static boolean isCharging;
     public static String networkState;
+    public static boolean isRinging = false;
 
     public static void saveConfigToSP(Context context) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(sp_file_name, Context.MODE_PRIVATE);

@@ -9,8 +9,8 @@ android {
         applicationId "ivxin.smsforward.mine"
         minSdkVersion 15
         targetSdkVersion 27
-        versionCode 10001
-        versionName "1.0.1"
+        versionCode 10002
+        versionName "1.0.2"
 
     }
 
@@ -33,4 +33,5 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:27.1.1'
     implementation 'com.android.support:cardview-v7:27.1.1'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+    implementation 'org.jsoup:jsoup:1.11.3'
 }

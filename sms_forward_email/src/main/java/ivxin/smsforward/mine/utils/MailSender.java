@@ -52,7 +52,7 @@ public class MailSender {
 
     private MimeMultipart mailBody = null;
     private String mailText = null;
-    private String mailSubject =  null;
+    private String mailSubject = null;
     private String[] toAdresses;
 
     public MailSender() {
@@ -69,7 +69,7 @@ public class MailSender {
         return this;
     }
 
-    public MailSender useMailPropertiesGMail(){
+    public MailSender useMailPropertiesGMail() {
 
 //		####################################################################################################
 //		Data from           https://support.google.com/mail/troubleshooter/1668960?rd=1&hl=en
@@ -103,7 +103,7 @@ public class MailSender {
         return this;
     }
 
-    public MailSender useMailPropertiesNetease(){
+    public MailSender useMailPropertiesNetease() {
         emailProperties = new Properties();
         emailProperties.put("mail.smtp.auth", "true");
         emailProperties.put("mail.smtp.host", "smtp.163.com");
@@ -114,7 +114,7 @@ public class MailSender {
         return this;
     }
 
-    public void useMailPropertiesSNMP(String serverHost, int serverPort, int socketFactoryPort, boolean autenticationEnabled){
+    public void useMailPropertiesSNMP(String serverHost, int serverPort, int socketFactoryPort, boolean autenticationEnabled) {
         emailProperties = new Properties();
         emailProperties.put("mail.smtp.auth", Boolean.toString(autenticationEnabled));
         emailProperties.put("mail.smtp.host", serverHost);
@@ -139,12 +139,11 @@ public class MailSender {
         emailMsg.setSentDate(new Date());
         emailMsg.setSubject(mailSubject);
 
-        BodyPart mailBodyPart = new MimeBodyPart();
-        mailBodyPart.setText(mailText);
-
-        mailBody.addBodyPart(mailBodyPart);
+        BodyPart html = new MimeBodyPart();
+//        html.setText(mailText);
+        html.setContent(mailText, "text/html; charset=utf-8");
+        mailBody.addBodyPart(html);
         emailMsg.setContent(mailBody);
-
         Transport.send(emailMsg);
     }
 
@@ -159,12 +158,12 @@ public class MailSender {
         return this;
     }
 
-    public MailSender setSubject(String subject){
+    public MailSender setSubject(String subject) {
         this.mailSubject = subject;
         return this;
     }
 
-    public MailSender setMailText(String text){
+    public MailSender setMailText(String text) {
         this.mailText = text;
         return this;
     }

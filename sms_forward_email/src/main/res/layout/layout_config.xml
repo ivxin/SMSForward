@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/sv_config"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:visibility="visible">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center">
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:text="@string/sender"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="16sp" />
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/senderemailaddress"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_sender_email"
+                android:layout_weight="1"
+                android:hint="@string/full_address"
+                android:inputType="textEmailAddress"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/senderemailpassword"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_sender_email_password"
+                android:layout_weight="1"
+                android:hint="@string/password"
+                android:inputType="textVisiblePassword"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:text="@string/sender_server_config"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="16sp" />
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/serverhost"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_server_host"
+                android:layout_weight="1"
+                android:hint="smtp.qq.com"
+                android:inputType="textWebEditText"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/serverport"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_server_port"
+                android:layout_weight="1"
+                android:hint="110"
+                android:inputType="number"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/socketfactoryport"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_socket_factory_port"
+                android:layout_weight="1"
+                android:hint="465"
+                android:inputType="number"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/autenticationenabled"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <CheckBox
+                android:id="@+id/cb_autentication"
+                android:layout_weight="1"
+                android:checked="true" />
+        </TableRow>
+
+        <TextView
+            android:layout_marginTop="10dp"
+            android:text="@string/receiver"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="16sp" />
+
+        <TableRow android:gravity="center">
+
+            <TextView
+                android:text="@string/receiveremailaddress"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_receiver_email"
+                android:layout_weight="1"
+                android:hint="654321@qq.com"
+                android:inputType="textEmailAddress"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </TableRow>
+
+        <CheckBox
+            android:id="@+id/cb_content_send_via_subject"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="@string/sms_content_send_via_email_subject_for_email_filter"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cb_send_incoming_call"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="@string/send_in_coming_call_mail"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cb_reject_incoming_call"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="@string/reject_in_coming_calls"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_test_email"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:paddingBottom="10dp"
+            android:paddingTop="10dp"
+            android:text="@string/send_a_test_email"
+            android:textColor="@android:color/black"
+            android:textSize="14sp" />
+
+        <CheckBox
+            android:id="@+id/cb_show_running_notification"
+            android:layout_marginTop="20dp"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="@string/show_running_notification"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cb_keep_screen_on"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:text="@string/keep_screen_on"
+            android:textColor="@android:color/black"
+            android:textSize="12sp" />
+    </TableLayout>
+</ScrollView>

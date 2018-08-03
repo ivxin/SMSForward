@@ -16,6 +16,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -112,6 +113,22 @@ public class MainActivity extends BaseActivity {
                 int intScale = intent.getIntExtra("scale", 100);
                 final int percent = (int) (intLevel * 100.0 / intScale);
                 Constants.battery_level = percent;
+                if (percent == 15 || percent == 5) {
+                    Constants.battery_low_warning_send = false;
+                }
+                if (percent > 30) {
+                    Constants.battery_low_warning_send = false;
+                } else {
+                    if (!Constants.battery_low_warning_send) {
+                        Constants.battery_low_warning_send = true;
+                        MailEntity mailEntity = new MailEntity();
+                        mailEntity.setSendTime(System.currentTimeMillis());
+                        mailEntity.setReceiver(Constants.receiverEmail);
+                        mailEntity.setSubject("低电量提醒：" + Constants.battery_level);
+                        mailEntity.setContent(Constants.getDeviceState());
+                        MailSenderHelper.sendEmail(mailEntity);
+                    }
+                }
                 runOnUiThread(() -> {
                     tv_battery.setText(String.format(Locale.CHINA, "%s％", percent));
                     pb_battery.setProgress(percent);
@@ -174,10 +191,15 @@ public class MainActivity extends BaseActivity {
                     if (isFinishing()) {
                         return;
                     }
-                    showMessageDialog("", String.format(Locale.CHINA, "Send to %s succeed!", mailEntity.getReceiver()), 3000);
+                    showMessageDialog("", String.format(Locale.CHINA, "测试邮件成功发送到 %s ", mailEntity.getReceiver()), 3000);
                     page = 0;
                     getMailData(page);
                 });
+                if (mailEntity.getContent().contains("restart")) {
+                    Bundle data = new Bundle();
+                    data.putString("message", "App已经成功重启");
+                    MyApplication.restartApplication(activity, data);
+                }
             }
 
             @Override
@@ -188,6 +210,20 @@ public class MainActivity extends BaseActivity {
                 runOnUiThread(() -> toast("Failed:" + e.getMessage()));
             }
         });
+        if (getIntent().getExtras() != null) {
+            String message = getIntent().getExtras().getString("message");
+            if (!TextUtils.isEmpty(message)) {
+                getWindow().getDecorView().postDelayed(() -> {
+                    toast(message);
+                    MailEntity mailEntity = new MailEntity();
+                    mailEntity.setReceiver(Constants.receiverEmail);
+                    mailEntity.setSubject("[短信转发]" + message);
+                    mailEntity.setContent("App启动消息：" + message);
+                    mailEntity.setSendTime(System.currentTimeMillis());
+                    MailSenderHelper.sendEmail(mailEntity);
+                }, 1000);
+            }
+        }
     }
 
     private void registerReceivers() {
@@ -200,11 +236,11 @@ public class MainActivity extends BaseActivity {
                 if (Constants.incomingCallMail) {
                     PhoneNumberJudge netJudge = new PhoneNumberJudge();
                     netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
-                        String subject = String.format(Locale.CHINA, "[SMS Forward]%s 来电", incomingNumber);
+                        String subject = String.format(Locale.CHINA, "[短信转发]%s 来电", incomingNumber);
                         MailEntity mailEntity = new MailEntity();
                         mailEntity.setReceiver(Constants.receiverEmail);
                         mailEntity.setSubject(subject);
-                        mailEntity.setContent("来电查询结果：" + result);
+                        mailEntity.setContent("来电查询结果：<br>" + result);
                         mailEntity.setSendTime(System.currentTimeMillis());
                         MailSenderHelper.sendEmail(mailEntity);
                     });
@@ -403,18 +439,17 @@ public class MainActivity extends BaseActivity {
             saveConfig();
             MailSenderHelper.sendTestEmail();
         });
-        tv_clear_log.setOnClickListener(v -> {
-            showConfirmDialog("", getString(R.string.delete_all_log), getString(R.string.yes), (dialog, which) -> {
-                dialog.dismiss();
-                DataBaseService dataBaseService = new DataBaseService(activity);
-                dataBaseService.deleteAllMail();
-                list.clear();
-                adapter.notifyDataSetChanged();
-            }, getString(R.string.no), (dialog, which) -> dialog.dismiss());
-
-        });
-        cb_keep_screen_on.setOnCheckedChangeListener((buttonView, isChecked) ->
-                getWindow().setFlags(isChecked ? WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON : 0, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        tv_clear_log.setOnClickListener(v -> showConfirmDialog("", getString(R.string.delete_all_log), getString(R.string.yes), (dialog, which) -> {
+            dialog.dismiss();
+            DataBaseService dataBaseService = new DataBaseService(activity);
+            dataBaseService.deleteAllMail();
+            list.clear();
+            adapter.notifyDataSetChanged();
+        }, getString(R.string.no), (dialog, which) -> dialog.dismiss()));
+        cb_keep_screen_on.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                    Constants.keepScreenOn = isChecked;
+                    setKeepScreenOn(isChecked);
+                }
         );
     }
 
@@ -532,6 +567,9 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    private void setKeepScreenOn(boolean on) {
+        getWindow().setFlags(on ? WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON : 0, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
     private void loadConfig() {
         Constants.loadConfigFromSP(activity);
@@ -552,6 +590,8 @@ public class MainActivity extends BaseActivity {
         cb_content_send_via_subject.setChecked(Constants.isContentInSubject);
         cb_send_incoming_call.setChecked(Constants.incomingCallMail);
         cb_reject_incoming_call.setChecked(Constants.rejectIncomingCalls);
+        cb_keep_screen_on.setChecked(Constants.keepScreenOn);
+        setKeepScreenOn(Constants.keepScreenOn);
     }
 
     private void saveConfig() {
@@ -569,6 +609,7 @@ public class MainActivity extends BaseActivity {
         Constants.incomingCallMail = cb_send_incoming_call.isChecked();
         Constants.rejectIncomingCalls = cb_reject_incoming_call.isChecked();
         Constants.showRunningNotification = cb_show_running_notification.isChecked();
+        Constants.keepScreenOn = cb_keep_screen_on.isChecked();
         Constants.saveConfigToSP(activity);
     }
 }

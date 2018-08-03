@@ -18,22 +18,18 @@ public class MailSenderHelper {
         if (Constants.started) {
             String mailText = String.format(Locale.CHINA,
                     "%s\n\n" +
-                            "SMS From:%s\n" +
-                            "SMS ReceiverCard:Card %d\n" +
-                            "SMS ReceiveTime:%s\n" +
-                            "Mail SendTime:%s\n" +
-                            "Device:%s\n",
+                            "短信发信人：%s\n" +
+                            "短信接收卡：Card %d\n" +
+                            "短信接收时间：%s\n" +
+                            "此邮件发送时间：%s\n",
                     sms.getContent(),
                     sms.getSender(),
                     sms.getReceiverCard(),
                     sdf.format(sms.getReceivedTime()),
-                    sdf.format(sms.getSendTime()),
-                    android.os.Build.BRAND + " " + android.os.Build.MODEL);
-            String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[SMS Forward] From:%s\n", sms.getSender());
-            if (mailText.contains("check")) {
-                String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
-                mailText = mailText.concat(deviceState);
-            }
+                    sdf.format(sms.getSendTime()));
+            String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[短信转发] From:%s\n", sms.getSender());
+            mailText = mailText.concat(Constants.getDeviceState());
+
             MailEntity mailEntity = new MailEntity();
             mailEntity.setSendTime(System.currentTimeMillis());
             mailEntity.setContent(mailText);
@@ -48,12 +44,11 @@ public class MailSenderHelper {
     }
 
     public static void sendTestEmail() {
-        String mailText = "TEST MAIL CONTENT";
-        String deviceState = String.format("\nBattery:%s\nCharging:%s\nNetwork:%s\n", Constants.battery_level, Constants.isCharging, Constants.networkState);
-        mailText = mailText.concat(deviceState);
+        String mailText = "[短信转发]测试邮件内容";
+        mailText = mailText.concat(Constants.getDeviceState());
         MailEntity mailEntity = new MailEntity();
         mailEntity.setSendTime(System.currentTimeMillis());
-        mailEntity.setSubject("TEST MAIL SUBJECT");
+        mailEntity.setSubject("[短信转发]测试邮件标题");
         mailEntity.setContent(mailText);
         mailEntity.setReceiver(Constants.receiverEmail);
         singleThreadExecutor.execute(new EmailSendTask(mailEntity));

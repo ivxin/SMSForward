@@ -29,7 +29,7 @@
     <string name="app_started">短信邮件转发启动了！</string>
     <string name="full_address">完整邮箱地址</string>
     <string name="password">密码/授权码</string>
-    <string name="check_tip">如果短信包含字符 \'check\', 设备状态会附加在邮件内容中</string>
+    <string name="check_tip">如果短信包含 \'restart\', 设备会重启此App</string>
     <string name="keep_screen_on">保持屏幕常亮</string>
     <string name="send_in_coming_call_mail">来电发送邮件提醒</string>
     <string name="reject_in_coming_calls">拒接来电</string>

@@ -1,6 +1,7 @@
 package ivxin.smsforward.mine.view;
 
 import android.support.annotation.Nullable;
+import android.text.Html;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
@@ -25,6 +26,6 @@ public class EmailAdapter extends BaseQuickAdapter<MailEntity, BaseViewHolder> {
         helper.setText(R.id.tv_receiver, item.getReceiver());
         helper.setText(R.id.tv_send_time, simpleDateFormat.format(item.getSendTime()));
         helper.setText(R.id.tv_subject, item.getSubject());
-        helper.setText(R.id.tv_content, item.getContent());
+        helper.setText(R.id.tv_content, Html.fromHtml(item.getContent().replaceAll("\n", "<br>").replaceAll("\r", "<br>").trim()));
     }
 }

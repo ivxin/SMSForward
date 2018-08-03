@@ -45,9 +45,12 @@ public class PhoneNumberJudge {
     public void judgeNumberFrom360(String phoneNumber, HarassingResultListener harassingResultListener) {
         new Thread(() -> {
             try {
-                Document doc = Jsoup.connect("https://www.so.com/s?q=" + phoneNumber).get();
+                Document doc = Jsoup.connect("https://m.so.com/s?q=" + phoneNumber).get();
+//                Document doc = Jsoup.connect("https://m.so.com/s?q=037155620323").get();
+                Log.d("PhoneNumberJudge", "judgeNumberFrom360,doc.body: "+doc.body().toString().trim());
                 Element element = doc.body();
-                Elements mohe = element.getElementsByClass("mohe-wrap");
+                Elements mohe = element.getElementsByClass("mohe-cont");
+//                String result = mohe.toString().trim();
                 String result = mohe.text();
                 Log.d("PhoneNumberJudge", "judgeNumberFrom360: " + result);
                 harassingResultListener.onSuccess(result);

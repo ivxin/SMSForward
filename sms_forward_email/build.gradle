@@ -9,8 +9,8 @@ android {
         applicationId "ivxin.smsforward.mine"
         minSdkVersion 15
         targetSdkVersion 27
-        versionCode 10002
-        versionName "1.0.2"
+        versionCode 10004
+        versionName "1.0.4"
 
     }
 

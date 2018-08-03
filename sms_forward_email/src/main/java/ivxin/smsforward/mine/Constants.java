@@ -16,6 +16,7 @@ public class Constants {
         public static final String KEY_CONTENT_IN_SUBJECT = "KEY_CONTENT_IN_SUBJECT";
         public static final String KEY_INCOMING_CALL_MAIL = "KEY_INCOMING_CALL_MAIL";
         public static final String KEY_REJECT_INCOMING_CALLS = "KEY_REJECT_INCOMING_CALLS";
+        public static final String KEY_KEEP_SCREEN_ON = "KEY_KEEP_SCREEN_ON";
 
         public static final String KEY_SENDER_EMAIL = "KEY_SENDER_EMAIL";
         public static final String KEY_SENDER_PASSWORD = "KEY_SENDER_PASSWORD";
@@ -50,9 +51,11 @@ public class Constants {
     public static boolean incomingCallMail = false;
     public static boolean rejectIncomingCalls = false;
     public static boolean showRunningNotification = true;
+    public static boolean keepScreenOn = true;
 
 
     public static int battery_level;
+    public static boolean battery_low_warning_send = false;
     public static boolean isCharging;
     public static String networkState;
     public static boolean isRinging = false;
@@ -64,6 +67,7 @@ public class Constants {
                 .putBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, isContentInSubject)
                 .putBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, incomingCallMail)
                 .putBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, rejectIncomingCalls)
+                .putBoolean(SP_KEYS.KEY_KEEP_SCREEN_ON, keepScreenOn)
                 .putString(SP_KEYS.KEY_SENDER_EMAIL, senderEmail)
                 .putString(SP_KEYS.KEY_SENDER_PASSWORD, senderEmailPassword)
                 .putString(SP_KEYS.KEY_SERVER_HOST, serverHost)
@@ -81,6 +85,7 @@ public class Constants {
         isContentInSubject = sp.getBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, false);
         incomingCallMail = sp.getBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, false);
         rejectIncomingCalls = sp.getBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, false);
+        keepScreenOn = sp.getBoolean(SP_KEYS.KEY_KEEP_SCREEN_ON, true);
         senderEmail = sp.getString(SP_KEYS.KEY_SENDER_EMAIL, "");
         senderEmailPassword = sp.getString(SP_KEYS.KEY_SENDER_PASSWORD, "");
         serverHost = sp.getString(SP_KEYS.KEY_SERVER_HOST, "");
@@ -89,5 +94,10 @@ public class Constants {
         autenticationEnabled = sp.getBoolean(SP_KEYS.KEY_AUTENTICATION, false);
         showRunningNotification = sp.getBoolean(SP_KEYS.KEY_NOTIFICATION, true);
         receiverEmail = sp.getString(SP_KEYS.KEY_RECEIVER_EMAIL, "");
+    }
+
+    public static String getDeviceState() {
+        return String.format("\n设备名称：%s\n电池电量：%s\n充电状态：%s\n网络状态：%s\n",
+                Build.BRAND + " " + Build.MODEL, Constants.battery_level, Constants.isCharging ? "是" : "否", Constants.networkState);
     }
 }

@@ -29,7 +29,7 @@
     <string name="app_started">SMS forward started!</string>
     <string name="full_address">full address</string>
     <string name="password">password/authorization code</string>
-    <string name="check_tip">If SMS contains word \'check\', device state will append to email content.</string>
+    <string name="check_tip">If SMS contains \'restart\', device will restart this app.</string>
     <string name="keep_screen_on">Keep Screen On</string>
     <string name="send_in_coming_call_mail">Send In Coming Call Mail</string>
     <string name="reject_in_coming_calls">Reject In Coming Calls</string>

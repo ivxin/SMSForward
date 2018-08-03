@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -24,6 +25,13 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
         super.onCreate(savedInstanceState, persistentState);
+        MyApplication.addActivity(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MyApplication.removeActivity(this);
     }
 
     private OnPermissionCheckedListener onPermissionCheckedListener;
@@ -73,11 +81,11 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void showMessageDialog(CharSequence title, CharSequence message) {
-        showConfirmDialog(title, message, "OK", (dialog, which) -> dialog.dismiss(), "", null);
+        showConfirmDialog(title, message, getString(R.string.yes), (dialog, which) -> dialog.dismiss(), "", null);
     }
 
     public void showMessageDialog(CharSequence title, CharSequence message, long dismissDelay) {
-        AlertDialog alertDialog = showConfirmDialog(title, message, "OK", (dialog, which) -> dialog.dismiss(), "", null);
+        AlertDialog alertDialog = showConfirmDialog(title, message, getString(R.string.yes), (dialog, which) -> dialog.dismiss(), "", null);
         getWindow().getDecorView().postDelayed(alertDialog::dismiss, dismissDelay);
     }
 
@@ -86,7 +94,7 @@ public class BaseActivity extends AppCompatActivity {
                                          CharSequence negativeText, DialogInterface.OnClickListener negativeListener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
-        builder.setMessage(message);
+        builder.setMessage(Html.fromHtml(message.toString().replaceAll("\n", "<br>").replaceAll("\r", "<br>").trim()));
         if (!TextUtils.isEmpty(positiveText))
             builder.setPositiveButton(positiveText, positiveListener);
         if (!TextUtils.isEmpty(negativeText))

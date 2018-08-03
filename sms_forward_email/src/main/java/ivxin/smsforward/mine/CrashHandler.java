@@ -166,7 +166,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
         for (Map.Entry<String, String> entry : infos.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            sb.append(key).append("=").append(value).append("\r\n");
+            sb.append(key).append("=").append(value).append("\r\n").append(Constants.BR);
         }
         Writer writer = new StringWriter();
         PrintWriter printWriter = new PrintWriter(writer);
@@ -184,14 +184,14 @@ public class CrashHandler implements UncaughtExceptionHandler {
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setReceiver(Constants.receiverEmail);
         mailEntity.setSubject("[异常退出]" + ex.getMessage());
-        mailEntity.setContent(sb.toString() + "\n充电状态：" + Constants.isCharging + "\n电量：" + Constants.battery_level);
+        mailEntity.setContent(sb.toString() + Constants.BR + "充电状态：" + Constants.isCharging + Constants.BR + "电量：" + Constants.battery_level);
         MailSenderHelper.sendEmail(mailEntity);
         try {
             long timestamp = System.currentTimeMillis();
             String time = formatter.format(new Date());
             String fileName = "crash-" + time + "-" + timestamp + ".log";
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                String path = "/sdcard/crash/";
+                String path = Environment.getExternalStorageDirectory()+"/crash/";
                 File dir = new File(path);
                 if (!dir.exists()) {
                     dir.mkdirs();

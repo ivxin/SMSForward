@@ -69,6 +69,17 @@ public class DataBaseService {
         return list;
     }
 
+    public long selectMailCount(){
+        DataBaseOpenHelper dataBaseOpenHelper = new DataBaseOpenHelper(context);
+        SQLiteDatabase db = dataBaseOpenHelper.getReadableDatabase();
+        String sql = "select count(*) from email";
+        Cursor cursor = db.rawQuery(sql, null);
+        cursor.moveToFirst();
+        long count = cursor.getLong(0);
+        cursor.close();
+        return count;
+    }
+
     public List<MailEntity> selectMailList(int pageIndex, int pageSize) {
         List<MailEntity> list = new ArrayList<>();
         DataBaseOpenHelper dataBaseOpenHelper = new DataBaseOpenHelper(context);

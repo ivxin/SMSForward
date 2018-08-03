@@ -58,6 +58,8 @@ public class MainActivity extends BaseActivity {
     private ImageView iv_signal;
     private LinearLayout ll_mail_send_log;
     private RecyclerView rv_mail_send_log;
+    private TextView tv_item_number;
+
     private TextView tv_clear_log;
     private ProgressBar pb_battery;
     private ProgressBar pb_signal;
@@ -240,7 +242,7 @@ public class MainActivity extends BaseActivity {
                         MailEntity mailEntity = new MailEntity();
                         mailEntity.setReceiver(Constants.receiverEmail);
                         mailEntity.setSubject(subject);
-                        mailEntity.setContent("来电查询结果：<br>" + result);
+                        mailEntity.setContent("来电查询结果：" + Constants.BR + result);
                         mailEntity.setSendTime(System.currentTimeMillis());
                         MailSenderHelper.sendEmail(mailEntity);
                     });
@@ -296,6 +298,7 @@ public class MainActivity extends BaseActivity {
                     } else {
                         adapter.loadMoreComplete();
                     }
+                    adapter.notifyDataSetChanged();
                 });
             }
         }).start();
@@ -337,6 +340,7 @@ public class MainActivity extends BaseActivity {
         iv_signal = (ImageView) findViewById(R.id.iv_signal);
         ll_mail_send_log = (LinearLayout) findViewById(R.id.ll_mail_send_log);
         rv_mail_send_log = (RecyclerView) findViewById(R.id.rv_mail_send_log);
+        tv_item_number = (TextView) findViewById(R.id.tv_item_number);
         tv_clear_log = (TextView) findViewById(R.id.tv_clear_log);
         sv_config = (ScrollView) findViewById(R.id.sv_config);
         pb_battery = (ProgressBar) findViewById(R.id.pb_battery);
@@ -382,6 +386,11 @@ public class MainActivity extends BaseActivity {
         adapter.setOnLoadMoreListener(() -> getMailData(++page), rv_mail_send_log);
         rv_mail_send_log.setAdapter(adapter);
         adapter.disableLoadMoreIfNotFullPage();
+        adapter.setOnItemConvert(position -> {
+            DataBaseService dataBaseService = new DataBaseService(activity);
+            long mailCount = dataBaseService.selectMailCount();
+            tv_item_number.setText(String.format(Locale.CHINA, "%s/%s", position + 1, mailCount));
+        });
         adapter.setOnItemClickListener((adapter, view, position) -> {
             MailEntity mailEntity = list.get(position);
             if (mailEntity != null) {

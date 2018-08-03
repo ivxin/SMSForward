@@ -9,6 +9,7 @@ import android.os.Build;
  */
 
 public class Constants {
+    public static final String BR = "<br>";
     public static final String DB_FILE_NAME = "sent_email.db";
 
     public class SP_KEYS {
@@ -97,7 +98,10 @@ public class Constants {
     }
 
     public static String getDeviceState() {
-        return String.format("\n设备名称：%s\n电池电量：%s\n充电状态：%s\n网络状态：%s\n",
+        return String.format(BR + "设备名称：%s" + BR +
+                        "电池电量：%s" + BR +
+                        "充电状态：%s" + BR +
+                        "网络状态：%s" + BR,
                 Build.BRAND + " " + Build.MODEL, Constants.battery_level, Constants.isCharging ? "是" : "否", Constants.networkState);
     }
 }

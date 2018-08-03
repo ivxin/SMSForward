@@ -17,17 +17,17 @@ public class MailSenderHelper {
     public static void sendEmail(SMSEntity sms) {
         if (Constants.started) {
             String mailText = String.format(Locale.CHINA,
-                    "%s\n\n" +
-                            "短信发信人：%s\n" +
-                            "短信接收卡：Card %d\n" +
-                            "短信接收时间：%s\n" +
-                            "此邮件发送时间：%s\n",
+                    "%s" + Constants.BR + Constants.BR +
+                            "短信发信人：%s" + Constants.BR +
+                            "短信接收卡：Card %d" + Constants.BR +
+                            "短信接收时间：%s" + Constants.BR +
+                            "此邮件发送时间：%s" + Constants.BR,
                     sms.getContent(),
                     sms.getSender(),
                     sms.getReceiverCard(),
                     sdf.format(sms.getReceivedTime()),
                     sdf.format(sms.getSendTime()));
-            String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[短信转发] From:%s\n", sms.getSender());
+            String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[短信转发] From:%s" + Constants.BR, sms.getSender());
             mailText = mailText.concat(Constants.getDeviceState());
 
             MailEntity mailEntity = new MailEntity();

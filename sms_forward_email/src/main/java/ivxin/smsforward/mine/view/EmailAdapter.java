@@ -2,6 +2,7 @@ package ivxin.smsforward.mine.view;
 
 import android.support.annotation.Nullable;
 import android.text.Html;
+import android.util.Log;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
@@ -23,9 +24,25 @@ public class EmailAdapter extends BaseQuickAdapter<MailEntity, BaseViewHolder> {
 
     @Override
     protected void convert(BaseViewHolder helper, MailEntity item) {
+        helper.setText(R.id.tv_mail_id, String.valueOf(item.getId()));
         helper.setText(R.id.tv_receiver, item.getReceiver());
         helper.setText(R.id.tv_send_time, simpleDateFormat.format(item.getSendTime()));
         helper.setText(R.id.tv_subject, item.getSubject());
-        helper.setText(R.id.tv_content, Html.fromHtml(item.getContent().replaceAll("\n", "<br>").replaceAll("\r", "<br>").trim()));
+        helper.setText(R.id.tv_content, Html.fromHtml(item.getContent().replaceAll("\n", Constants.BR).replaceAll("\r", Constants.BR).trim()));
+
+        Log.d(TAG, "convert: position:" + helper.getLayoutPosition());
+        if (onItemConvert != null) {
+            onItemConvert.onScroll(helper.getLayoutPosition());
+        }
+    }
+
+    private OnItemConvert onItemConvert;
+
+    public void setOnItemConvert(OnItemConvert onItemConvert) {
+        this.onItemConvert = onItemConvert;
+    }
+
+    public interface OnItemConvert {
+        void onScroll(int position);
     }
 }

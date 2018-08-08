@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
@@ -45,10 +46,47 @@ public class MainService extends Service {
     public static final String TAG = MainService.class.getSimpleName();
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private TelephonyManager mTelephonyManager;
-    private SignalUtil.SignalListener mListener;
+
     private NotificationManager mNotificationManager;
     private SMSReceiver smsReceiver = new SMSReceiver();
     private BatteryReceiver batteryReceiver = new BatteryReceiver();
+
+    private SignalUtil.SignalListener mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> Constants.signalType = signalType, incomingNumber -> {
+        if (Constants.started) {
+            if (Constants.incomingCallMail) {
+                PhoneNumberJudge netJudge = new PhoneNumberJudge();
+                netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
+                    String subject = String.format(Locale.CHINA, "[短信转发]%s 来电", incomingNumber);
+                    MailEntity mailEntity = new MailEntity();
+                    mailEntity.setReceiver(Constants.receiverEmail);
+                    mailEntity.setSubject(subject);
+                    mailEntity.setContent("来电查询结果：" + Constants.BR + result);
+                    mailEntity.setSendTime(System.currentTimeMillis());
+                    MailSenderHelper.sendEmail(mailEntity);
+                });
+            }
+        }
+    });
+
+    private BatteryReceiver.OnBatteryInfoUpdateListener onBatteryInfoUpdateListener = (action, status, percent) -> {
+        Constants.battery_level = percent;
+        if (percent == 15 || percent == 5) {
+            Constants.battery_low_warning_send = false;
+        }
+        if (percent > 30) {
+            Constants.battery_low_warning_send = false;
+        } else {
+            if (!Constants.battery_low_warning_send) {
+                Constants.battery_low_warning_send = true;
+                MailEntity mailEntity = new MailEntity();
+                mailEntity.setSendTime(System.currentTimeMillis());
+                mailEntity.setReceiver(Constants.receiverEmail);
+                mailEntity.setSubject("低电量提醒：" + Constants.battery_level);
+                mailEntity.setContent("低电量：" + Constants.battery_level);
+                MailSenderHelper.sendEmail(mailEntity);
+            }
+        }
+    };
 
     @Nullable
     @Override
@@ -62,7 +100,7 @@ public class MainService extends Service {
         super.onCreate();
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        registerReceivers();
+
         SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, receiverCardName, timestampMillis) -> {
             SMSEntity smsEntity = new SMSEntity();
             smsEntity.setContent(content);
@@ -77,6 +115,7 @@ public class MainService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        registerReceivers();
         Notification notification = showOnGoingNotification();
         startForeground(1, notification);
         //绑定建立链接
@@ -103,7 +142,9 @@ public class MainService extends Service {
             mailFetchUtil.setProperties(Constants.commandMailHost, Constants.commandUsername, Constants.commandPassword);
             CommandEmail commandEmail = mailFetchUtil.fetchIMAPEmail();
             if (commandEmail == null) {
+                Looper.prepare();
                 Toast.makeText(MainService.this, "收信邮箱配置异常", Toast.LENGTH_SHORT).show();
+                Looper.loop();
                 return;
             }
             if (!Constants.isLastMail(MainService.this, commandEmail.getMessageId())) {
@@ -160,45 +201,14 @@ public class MainService extends Service {
         batteryIntentFilter.setPriority(1000);
         registerReceiver(batteryReceiver, batteryIntentFilter);
 
-        BatteryReceiver.addOnBatteryInfoUpdateListener((action, status, percent) -> {
-            Constants.battery_level = percent;
-            if (percent == 15 || percent == 5) {
-                Constants.battery_low_warning_send = false;
-            }
-            if (percent > 30) {
-                Constants.battery_low_warning_send = false;
-            } else {
-                if (!Constants.battery_low_warning_send) {
-                    Constants.battery_low_warning_send = true;
-                    MailEntity mailEntity = new MailEntity();
-                    mailEntity.setSendTime(System.currentTimeMillis());
-                    mailEntity.setReceiver(Constants.receiverEmail);
-                    mailEntity.setSubject("低电量提醒：" + Constants.battery_level);
-                    mailEntity.setContent("低电量：" + Constants.battery_level);
-                    MailSenderHelper.sendEmail(mailEntity);
-                }
-            }
-        });
+        BatteryReceiver.removeOnBatteryInfoUpdateListener(onBatteryInfoUpdateListener);
+        BatteryReceiver.addOnBatteryInfoUpdateListener(onBatteryInfoUpdateListener);
 
-        mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> Constants.signalType = signalType, incomingNumber -> {
-            if (Constants.started) {
-                if (Constants.incomingCallMail) {
-                    PhoneNumberJudge netJudge = new PhoneNumberJudge();
-                    netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
-                        String subject = String.format(Locale.CHINA, "[短信转发]%s 来电", incomingNumber);
-                        MailEntity mailEntity = new MailEntity();
-                        mailEntity.setReceiver(Constants.receiverEmail);
-                        mailEntity.setSubject(subject);
-                        mailEntity.setContent("来电查询结果：" + Constants.BR + result);
-                        mailEntity.setSendTime(System.currentTimeMillis());
-                        MailSenderHelper.sendEmail(mailEntity);
-                    });
-                }
-            }
-        });
-        if (Constants.HAVE_PERMISSION)
+        if (Constants.HAVE_PERMISSION) {
+            mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
             mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS |
                     SignalUtil.SignalListener.LISTEN_CALL_STATE);
+        }
     }
 
     private Notification showOnGoingNotification() {

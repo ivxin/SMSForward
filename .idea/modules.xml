@@ -3,7 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/SMSForward.iml" filepath="$PROJECT_DIR$/SMSForward.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SMSForward.iml" filepath="$PROJECT_DIR$/SMSForward.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sms_forward_email/sms_forward_email.iml" filepath="$PROJECT_DIR$/sms_forward_email/sms_forward_email.iml" />
     </modules>
   </component>
 </project>

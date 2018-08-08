@@ -3,7 +3,14 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 27
 
-
+    signingConfigs {
+        config {
+            keyAlias 'default'
+            keyPassword '519436'
+            storeFile file('D:/BaiduYunDownload/wyp.keystore')
+            storePassword '519436'
+        }
+    }
 
     defaultConfig {
         applicationId "ivxin.smsforward.mine"

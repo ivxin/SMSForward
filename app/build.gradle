@@ -5,7 +5,7 @@ android {
         config {
             keyAlias 'default'
             keyPassword '519436'
-            storeFile file('F:/BaiduYunDownload/wyp.keystore')
+            storeFile file('D:/BaiduYunDownload/wyp.keystore')
             storePassword '519436'
         }
     }

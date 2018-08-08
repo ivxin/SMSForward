@@ -2,20 +2,11 @@ package ivxin.smsforward.mine;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.WindowManager;
@@ -39,12 +30,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import cn.richinfo.dualsim.TelephonyManagement;
 import ivxin.smsforward.mine.db.DataBaseService;
 import ivxin.smsforward.mine.entity.MailEntity;
-import ivxin.smsforward.mine.entity.SMSEntity;
-import ivxin.smsforward.mine.receiver.SMSReceiver;
+import ivxin.smsforward.mine.entity.OperCodeStr;
+import ivxin.smsforward.mine.receiver.BatteryReceiver;
+import ivxin.smsforward.mine.service.MainService;
 import ivxin.smsforward.mine.utils.MailSenderHelper;
-import ivxin.smsforward.mine.utils.PhoneNumberJudge;
 import ivxin.smsforward.mine.utils.PingUtil;
 import ivxin.smsforward.mine.utils.SignalUtil;
 import ivxin.smsforward.mine.view.EmailAdapter;
@@ -82,7 +74,14 @@ public class MainActivity extends BaseActivity {
     private CheckBox cb_content_send_via_subject;
     private CheckBox cb_send_incoming_call;
     private CheckBox cb_reject_incoming_call;
-    private CheckBox cb_show_running_notification;
+    private CheckBox cb_remote_sent_sms;
+
+    private EditText et_command_host;
+    private EditText et_command_username;
+    private EditText et_command_password;
+    private EditText et_command_code;
+    private EditText et_command_check_time;
+
     private Button btn_test_email;
 
     private CheckBox cb_keep_screen_on;
@@ -96,91 +95,48 @@ public class MainActivity extends BaseActivity {
     private int page = 0;
     private final int pageSize = 10;
 
-    private TelephonyManager mTelephonyManager;
-    private SignalUtil.SignalListener mListener;
-    private int signalType;
-    private NotificationManager mNotificationManager;
-
-    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-            boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                    status == BatteryManager.BATTERY_STATUS_FULL;
-            Constants.isCharging = isCharging;
-            if (Intent.ACTION_BATTERY_CHANGED.equals(action)) {
-                int intLevel = intent.getIntExtra("level", 0);
-                int intScale = intent.getIntExtra("scale", 100);
-                final int percent = (int) (intLevel * 100.0 / intScale);
-                Constants.battery_level = percent;
-                if (percent == 15 || percent == 5) {
-                    Constants.battery_low_warning_send = false;
-                }
-                if (percent > 30) {
-                    Constants.battery_low_warning_send = false;
-                } else {
-                    if (!Constants.battery_low_warning_send) {
-                        Constants.battery_low_warning_send = true;
-                        MailEntity mailEntity = new MailEntity();
-                        mailEntity.setSendTime(System.currentTimeMillis());
-                        mailEntity.setReceiver(Constants.receiverEmail);
-                        mailEntity.setSubject("低电量提醒：" + Constants.battery_level);
-                        mailEntity.setContent(Constants.getDeviceState());
-                        MailSenderHelper.sendEmail(mailEntity);
-                    }
-                }
-                runOnUiThread(() -> {
-                    tv_battery.setText(String.format(Locale.CHINA, "%s％", percent));
-                    pb_battery.setProgress(percent);
-                    if (isCharging) {
-                        iv_battery.setImageResource(R.drawable.ic_battery_charging_full_24dp);
-                    } else {
-                        if (percent == 100) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_std_24dp);
-                        } else if (percent > 90) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_90_24dp);
-                        } else if (percent > 80) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_80_24dp);
-                        } else if (percent > 60) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_60_24dp);
-                        } else if (percent > 50) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_50_24dp);
-                        } else if (percent > 30) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_30_24dp);
-                        } else if (percent > 20) {
-                            iv_battery.setImageResource(R.drawable.ic_battery_20_24dp);
-                        } else {
-                            iv_battery.setImageResource(R.drawable.ic_battery_alert_24dp);
-                        }
-                    }
-                });
-            }
-        }
-    };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        startService(new Intent(this, MainService.class));
         activity = this;
-        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         setContentView(R.layout.activity_main);
         initView();
         getPermission();
-        registerReceivers();
+        BatteryReceiver.addOnBatteryInfoUpdateListener((action, status, percent) -> {
+            Constants.isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    status == BatteryManager.BATTERY_STATUS_FULL;
+            runOnUiThread(() -> {
+                tv_battery.setText(String.format(Locale.CHINA, "%s％", percent));
+                pb_battery.setProgress(percent);
+                if (Constants.isCharging) {
+                    iv_battery.setImageResource(R.drawable.ic_battery_charging_full_24dp);
+                } else {
+                    if (percent == 100) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_std_24dp);
+                    } else if (percent > 90) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_90_24dp);
+                    } else if (percent > 80) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_80_24dp);
+                    } else if (percent > 60) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_60_24dp);
+                    } else if (percent > 50) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_50_24dp);
+                    } else if (percent > 30) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_30_24dp);
+                    } else if (percent > 20) {
+                        iv_battery.setImageResource(R.drawable.ic_battery_20_24dp);
+                    } else {
+                        iv_battery.setImageResource(R.drawable.ic_battery_alert_24dp);
+                    }
+                }
+            });
+        });
+
         page = 0;
         getMailData(page);
-        SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, timestampMillis) -> {
-            SMSEntity smsEntity = new SMSEntity();
-            smsEntity.setContent(content);
-            smsEntity.setSender(sender);
-            smsEntity.setReceivedTime(timestampMillis);
-            smsEntity.setReceiverCard(receiverCard);
-            smsEntity.setSendTime(System.currentTimeMillis());
-            MailSenderHelper.sendEmail(smsEntity);
-        });
+
         MailSenderHelper.setOnMailSentCallback(new MailSenderHelper.OnMailSentCallback() {
             @Override
             public void onSuccess(MailEntity mailEntity) {
@@ -193,7 +149,7 @@ public class MainActivity extends BaseActivity {
                     if (isFinishing()) {
                         return;
                     }
-                    showMessageDialog("", String.format(Locale.CHINA, "测试邮件成功发送到 %s ", mailEntity.getReceiver()), 3000);
+                    showMessageDialog("", String.format(Locale.CHINA, "邮件成功发送到 %s ", mailEntity.getReceiver()), 3000);
                     page = 0;
                     getMailData(page);
                 });
@@ -228,45 +184,17 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private void registerReceivers() {
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        registerReceiver(mBatInfoReceiver, intentFilter);
-        mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-        mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> this.signalType = signalType, incomingNumber -> {
-            if (Constants.started) {
-                if (Constants.incomingCallMail) {
-                    PhoneNumberJudge netJudge = new PhoneNumberJudge();
-                    netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
-                        String subject = String.format(Locale.CHINA, "[短信转发]%s 来电", incomingNumber);
-                        MailEntity mailEntity = new MailEntity();
-                        mailEntity.setReceiver(Constants.receiverEmail);
-                        mailEntity.setSubject(subject);
-                        mailEntity.setContent("来电查询结果：" + Constants.BR + result);
-                        mailEntity.setSendTime(System.currentTimeMillis());
-                        MailSenderHelper.sendEmail(mailEntity);
-                    });
-                }
-            }
-        });
-    }
-
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (Constants.HAVE_PERMISSION && Constants.showRunningNotification) {
+        if (Constants.HAVE_PERMISSION) {
             if (Constants.started) {
                 PingUtil.ping(Constants.serverHost, content -> runOnUiThread(new PingUIRunnable(content)));
-                showOnGoingNotification();
             } else {
                 PingUtil.stopPing();
-                hideOnGoingNotification();
             }
         }
-        if (Constants.HAVE_PERMISSION)
-            mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS |
-                    SignalUtil.SignalListener.LISTEN_CALL_STATE);
     }
 
     @Override
@@ -279,8 +207,6 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         PingUtil.stopPing();
-        mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
-        unregisterReceiver(mBatInfoReceiver);
     }
 
     private void getMailData(int pageIndex) {
@@ -309,6 +235,15 @@ public class MainActivity extends BaseActivity {
                              @Override
                              public void onPermissionGranted(String permission) {
                                  Constants.HAVE_PERMISSION = true;
+                                 if (Manifest.permission.READ_PHONE_STATE.equals(permission)) {
+                                     TelephonyManagement telephonyManagement = TelephonyManagement.getInstance();
+                                     TelephonyManagement.TelephonyInfo info = telephonyManagement.getTelephonyInfo(activity);
+                                     Constants.cardCount = info.getSIMCount();
+                                     Constants.card1Name = OperCodeStr.selectOperate(activity, info.getOperatorSIM1());
+                                     if (Constants.cardCount > 1) {
+                                         Constants.card2Name = OperCodeStr.selectOperate(activity, info.getOperatorSIM2());
+                                     }
+                                 }
                              }
 
                              @Override
@@ -352,15 +287,20 @@ public class MainActivity extends BaseActivity {
         et_server_port = (EditText) findViewById(R.id.et_server_port);
         et_socket_factory_port = (EditText) findViewById(R.id.et_socket_factory_port);
         cb_autentication = (CheckBox) findViewById(R.id.cb_autentication);
-
+        cb_remote_sent_sms = findViewById(R.id.cb_remote_sent_sms);
         et_receiver_email = (EditText) findViewById(R.id.et_receiver_email);
         cb_content_send_via_subject = (CheckBox) findViewById(R.id.cb_content_send_via_subject);
         cb_send_incoming_call = (CheckBox) findViewById(R.id.cb_send_incoming_call);
         cb_reject_incoming_call = (CheckBox) findViewById(R.id.cb_reject_incoming_call);
-        cb_show_running_notification = (CheckBox) findViewById(R.id.cb_show_running_notification);
         btn_test_email = (Button) findViewById(R.id.btn_test_email);
         cb_keep_screen_on = (CheckBox) findViewById(R.id.cb_keep_screen_on);
         btn_edit_config = (ToggleButton) findViewById(R.id.btn_edit_config);
+
+        et_command_host = findViewById(R.id.et_command_host);
+        et_command_username = findViewById(R.id.et_command_username);
+        et_command_password = findViewById(R.id.et_command_password);
+        et_command_code = findViewById(R.id.et_command_code);
+        et_command_check_time = findViewById(R.id.et_command_check_time);
 
         if (sdkBelow17) {
             tv_clock = findViewById(R.id.tv_clock);
@@ -411,7 +351,15 @@ public class MainActivity extends BaseActivity {
         });
 
         loadConfig();
-        cb_show_running_notification.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.showRunningNotification = isChecked);
+        cb_remote_sent_sms.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Constants.remoteSentSms = isChecked;
+            findViewById(R.id.tv_command_title).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            findViewById(R.id.tr_serverhost).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            findViewById(R.id.tr_command_username).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            findViewById(R.id.tr_command_password).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            findViewById(R.id.tr_command_code).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+            findViewById(R.id.tr_command_check_time).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
         cb_autentication.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.autenticationEnabled = isChecked);
         cb_content_send_via_subject.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.isContentInSubject = isChecked);
         cb_send_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.incomingCallMail = isChecked);
@@ -421,13 +369,12 @@ public class MainActivity extends BaseActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (Constants.HAVE_PERMISSION) {
                     Constants.started = isChecked;
-                    if (Constants.showRunningNotification) {
-                        if (Constants.started) showOnGoingNotification();
-                        else hideOnGoingNotification();
-                    }
                     ll_mail_send_log.setVisibility(Constants.started ? View.VISIBLE : View.GONE);
                     sv_config.setVisibility(Constants.started ? View.GONE : View.VISIBLE);
-                    if (Constants.started) toast(getString(R.string.check_tip), Toast.LENGTH_LONG);
+                    if (Constants.started) {
+                        toast(getString(R.string.check_tip), Toast.LENGTH_LONG);
+                        startService(new Intent(MainActivity.this.getApplicationContext(), MainService.class));
+                    }
                     saveConfig();
                 } else {
                     btn_edit_config.setOnCheckedChangeListener(null);
@@ -501,7 +448,7 @@ public class MainActivity extends BaseActivity {
             }
             pb_signal.setProgress((int) percent);
             String signalTypeString;
-            switch (signalType) {
+            switch (Constants.signalType) {
                 case SignalUtil.NETWORKTYPE_WIFI:
                     signalTypeString = "WIFI";
                     if (percent > 90) {
@@ -542,40 +489,6 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    private void showOnGoingNotification() {
-        if (mNotificationManager == null) {
-            return;
-        }
-        String channelId = getPackageName();
-        String channelName = getString(R.string.app_name);
-        Intent intent = new Intent(activity.getApplicationContext(), MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(activity, channelId);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_MIN);
-            mNotificationManager.createNotificationChannel(channel);
-        }
-        mBuilder.setContentTitle(String.format(Locale.CHINA, getString(R.string.app_is_running), getString(R.string.app_name)))//设置通知栏标题
-                .setContentText(String.format(Locale.CHINA, getString(R.string.app_running_tip), et_receiver_email.getText().toString())) //设置通知栏显示内容
-                .setContentIntent(pendingIntent) //设置通知栏点击意图
-                //  .setNumber(number) //设置通知集合的数量
-                .setTicker(getString(R.string.app_started)) //通知首次出现在通知栏，带上升动画效果的
-                .setWhen(System.currentTimeMillis())//通知产生的时间，会在通知信息里显示，一般是系统获取到的时间
-                .setPriority(Notification.PRIORITY_MIN) //设置该通知优先级
-                .setAutoCancel(false)//设置这个标志当用户单击面板就可以让通知将自动取消
-                .setOngoing(true)//ture，设置他为一个正在进行的通知。他们通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
-//                                .setDefaults(Notification.DEFAULT_VIBRATE)//向通知添加声音、闪灯和振动效果的最简单、最一致的方式是使用当前的用户默认设置，使用defaults属性，可以组合
-                //Notification.DEFAULT_ALL  Notification.DEFAULT_SOUND 添加声音 // requires VIBRATE permission
-                .setSmallIcon(R.mipmap.sms_rew);//设置通知小ICON
-        mNotificationManager.notify(1, mBuilder.build());
-    }
-
-    private void hideOnGoingNotification() {
-        if (mNotificationManager != null) {
-            mNotificationManager.cancelAll();
-        }
-    }
-
     private void setKeepScreenOn(boolean on) {
         getWindow().setFlags(on ? WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON : 0, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -592,7 +505,6 @@ public class MainActivity extends BaseActivity {
         et_server_port.setText(String.valueOf(Constants.serverPort));
         et_socket_factory_port.setText(String.valueOf(Constants.socketFactoryPort));
         cb_autentication.setChecked(Constants.autenticationEnabled);
-        cb_show_running_notification.setChecked(Constants.showRunningNotification);
 
         et_receiver_email.setText(Constants.receiverEmail);
         btn_edit_config.setChecked(Constants.started);
@@ -600,6 +512,19 @@ public class MainActivity extends BaseActivity {
         cb_send_incoming_call.setChecked(Constants.incomingCallMail);
         cb_reject_incoming_call.setChecked(Constants.rejectIncomingCalls);
         cb_keep_screen_on.setChecked(Constants.keepScreenOn);
+
+        cb_remote_sent_sms.setChecked(Constants.remoteSentSms);
+        findViewById(R.id.tv_command_title).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tr_serverhost).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tr_command_username).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tr_command_password).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tr_command_code).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        findViewById(R.id.tr_command_check_time).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        et_command_host.setText(Constants.commandMailHost);
+        et_command_username.setText(Constants.commandUsername);
+        et_command_password.setText(Constants.commandPassword);
+        et_command_code.setText(Constants.commandCode);
+        et_command_check_time.setText(String.valueOf(Constants.commandCheckTime));
         setKeepScreenOn(Constants.keepScreenOn);
     }
 
@@ -617,8 +542,14 @@ public class MainActivity extends BaseActivity {
         Constants.isContentInSubject = cb_content_send_via_subject.isChecked();
         Constants.incomingCallMail = cb_send_incoming_call.isChecked();
         Constants.rejectIncomingCalls = cb_reject_incoming_call.isChecked();
-        Constants.showRunningNotification = cb_show_running_notification.isChecked();
         Constants.keepScreenOn = cb_keep_screen_on.isChecked();
+
+        Constants.remoteSentSms = cb_remote_sent_sms.isChecked();
+        Constants.commandMailHost = et_command_host.getText().toString().trim();
+        Constants.commandUsername = et_command_username.getText().toString().trim();
+        Constants.commandPassword = et_command_password.getText().toString().trim();
+        Constants.commandCode = et_command_code.getText().toString().trim();
+        Constants.commandCheckTime = Integer.parseInt(et_command_check_time.getText().toString().trim());
         Constants.saveConfigToSP(activity);
     }
 }

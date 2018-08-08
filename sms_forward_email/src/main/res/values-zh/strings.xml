@@ -26,6 +26,7 @@
     <string name="time_out">超时</string>
     <string name="app_is_running">%s 正在运行</string>
     <string name="app_running_tip">所有短信会转发到 [%s]</string>
+    <string name="app_stop_tip">所有短信停止转发到 [%s]</string>
     <string name="app_started">短信邮件转发启动了！</string>
     <string name="full_address">完整邮箱地址</string>
     <string name="password">密码/授权码</string>
@@ -36,4 +37,13 @@
     <string name="loadmore">上滑加载更多</string>
     <string name="loading">加载中</string>
     <string name="loadfail">加载失败</string>
+    <string name="remote_send_sms">远程短信发送</string>
+    <string name="command_email_host">短信邮箱地址</string>
+    <string name="command_email_username">短信邮箱用户名</string>
+    <string name="command_email_password">短信邮箱密码</string>
+    <string name="command_email_check_time">短信邮件检查时间</string>
+    <string name="command_receiver_server_config">短信接收邮箱配置</string>
+    <string name="seconds">秒</string>
+    <string name="command_verify_code">防刷验证码</string>
+    <string name="verify_code">任何字符验证码(防刷)</string>
 </resources>

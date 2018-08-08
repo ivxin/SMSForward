@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.telephony.SmsMessage;
 
+import ivxin.smsforward.mine.Constants;
+
 
 /**
  * Created by yaping.wang on 2017/9/18.
@@ -45,9 +47,9 @@ public class SMSReceiver extends BroadcastReceiver {
             senderAddress = message.getOriginatingAddress();
             smsContent.append(message.getMessageBody());
         }
-
+        String receiverCardName = receiverCard == 1 ? Constants.card1Name : Constants.card2Name;
         if (onSMSReceivedListener != null) {
-            onSMSReceivedListener.onSMSReceived(senderAddress, smsContent.toString(), receiverCard, time);
+            onSMSReceivedListener.onSMSReceived(senderAddress, smsContent.toString(), receiverCard, receiverCardName, time);
         }
     }
 
@@ -56,6 +58,6 @@ public class SMSReceiver extends BroadcastReceiver {
     }
 
     public interface OnSMSReceivedListener {
-        void onSMSReceived(String sender, String content, int receiverCard, long timestampMillis);
+        void onSMSReceived(String sender, String content, int receiverCard, String receiverName, long timestampMillis);
     }
 }

@@ -111,7 +111,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
             @Override
             public void run() {
                 Looper.prepare();
-                Toast.makeText(mContext, "哇哦~~程序出现异常(◐_◑)", Toast.LENGTH_LONG).show();
+                Toast.makeText(mContext, "程序出现异常,稍后重启程序", Toast.LENGTH_LONG).show();
                 Looper.loop();
             }
         }.start();
@@ -184,14 +184,14 @@ public class CrashHandler implements UncaughtExceptionHandler {
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setReceiver(Constants.receiverEmail);
         mailEntity.setSubject("[异常退出]" + ex.getMessage());
-        mailEntity.setContent(sb.toString() + Constants.BR + "充电状态：" + Constants.isCharging + Constants.BR + "电量：" + Constants.battery_level);
+        mailEntity.setContent(sb.toString() + Constants.BR + Constants.BR + "请转发次邮件到 ivxin@qq.com");
         MailSenderHelper.sendEmail(mailEntity);
         try {
             long timestamp = System.currentTimeMillis();
             String time = formatter.format(new Date());
             String fileName = "crash-" + time + "-" + timestamp + ".log";
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                String path = Environment.getExternalStorageDirectory()+"/crash/";
+                String path = Environment.getExternalStorageDirectory() + "/crash/";
                 File dir = new File(path);
                 if (!dir.exists()) {
                     dir.mkdirs();

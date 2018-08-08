@@ -26,6 +26,7 @@
     <string name="time_out">time out</string>
     <string name="app_is_running">%s is Running</string>
     <string name="app_running_tip">All SMS will forward to [%s]</string>
+    <string name="app_stop_tip">All SMS stop forward to [%s]</string>
     <string name="app_started">SMS forward started!</string>
     <string name="full_address">full address</string>
     <string name="password">password/authorization code</string>
@@ -36,4 +37,13 @@
     <string name="loadmore">Load More</string>
     <string name="loading">Loading</string>
     <string name="loadfail">Load Fail</string>
+    <string name="remote_send_sms">Remote Send SMS</string>
+    <string name="command_email_host">Command Email Host</string>
+    <string name="command_email_username">Command Email Username</string>
+    <string name="command_email_password">Command Email Password</string>
+    <string name="command_email_check_time">Command Email Check Time</string>
+    <string name="command_receiver_server_config">Command Receiver Server Config</string>
+    <string name="seconds">seconds</string>
+    <string name="command_verify_code">Command Verify Code</string>
+    <string name="verify_code">Verify Code</string>
 </resources>

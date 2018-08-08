@@ -6,6 +6,7 @@ public class SMSEntity {
     private long sendTime;
     private long receivedTime;
     private int receiverCard;
+    private String  receiverCardName;
 
     public String getSender() {
         return sender;
@@ -45,5 +46,13 @@ public class SMSEntity {
 
     public void setReceiverCard(int receiverCard) {
         this.receiverCard = receiverCard;
+    }
+
+    public String getReceiverCardName() {
+        return receiverCardName;
+    }
+
+    public void setReceiverCardName(String receiverCardName) {
+        this.receiverCardName = receiverCardName;
     }
 }

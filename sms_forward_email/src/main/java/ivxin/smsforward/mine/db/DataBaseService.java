@@ -24,6 +24,7 @@ public class DataBaseService {
         db.execSQL("insert into email (send_time,subject,content,receiver)values(?,?,?,?)",
                 new String[]{String.valueOf(mailEntity.getSendTime()), mailEntity.getSubject(), mailEntity.getContent(), mailEntity.getReceiver()});
         db.close();
+        dataBaseOpenHelper.close();
     }
 
     public void deleteMail(MailEntity mailEntity) {
@@ -32,6 +33,7 @@ public class DataBaseService {
         String id = String.valueOf(mailEntity.getId());
         db.execSQL("delete from email where id=?", new String[]{id});
         db.close();
+        dataBaseOpenHelper.close();
     }
 
     public void deleteAllMail() {
@@ -39,6 +41,7 @@ public class DataBaseService {
         SQLiteDatabase db = dataBaseOpenHelper.getWritableDatabase();
         db.execSQL("delete from email where id>0");
         db.close();
+        dataBaseOpenHelper.close();
     }
 
     public void updateMail(MailEntity mailEntity) {
@@ -48,6 +51,7 @@ public class DataBaseService {
         db.execSQL("update email set send_time=?,subject=?,content=?,receiver=? where id=?",
                 new String[]{String.valueOf(mailEntity.getSendTime()), mailEntity.getSubject(), mailEntity.getContent(), mailEntity.getReceiver(), id});
         db.close();
+        dataBaseOpenHelper.close();
     }
 
     public List<MailEntity> selectMailList() {
@@ -66,6 +70,7 @@ public class DataBaseService {
         }
         c.close();
         db.close();
+        dataBaseOpenHelper.close();
         return list;
     }
 
@@ -77,6 +82,8 @@ public class DataBaseService {
         cursor.moveToFirst();
         long count = cursor.getLong(0);
         cursor.close();
+        db.close();
+        dataBaseOpenHelper.close();
         return count;
     }
 
@@ -97,6 +104,7 @@ public class DataBaseService {
         }
         c.close();
         db.close();
+        dataBaseOpenHelper.close();
         return list;
     }
 

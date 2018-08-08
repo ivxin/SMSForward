@@ -9,8 +9,8 @@ android {
         applicationId "ivxin.smsforward.mine"
         minSdkVersion 15
         targetSdkVersion 27
-        versionCode 10004
-        versionName "1.0.4"
+        versionCode 10005
+        versionName "1.0.5"
 
     }
 
@@ -35,4 +35,5 @@ dependencies {
     //https://github.com/CymChad/BaseRecyclerViewAdapterHelper
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     implementation 'org.jsoup:jsoup:1.11.3'
+    implementation 'com.bfy:dualsim:1.0.1'
 }

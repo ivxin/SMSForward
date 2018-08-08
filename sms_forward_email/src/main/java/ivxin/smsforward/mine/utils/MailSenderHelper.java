@@ -19,16 +19,16 @@ public class MailSenderHelper {
             String mailText = String.format(Locale.CHINA,
                     "%s" + Constants.BR + Constants.BR +
                             "短信发信人：%s" + Constants.BR +
-                            "短信接收卡：Card %d" + Constants.BR +
-                            "短信接收时间：%s" + Constants.BR +
-                            "此邮件发送时间：%s" + Constants.BR,
+                            "短信接收卡：Card %d %s" + Constants.BR +
+                            "短信中心时间：%s" + Constants.BR +
+                            "邮件发送时间：%s" + Constants.BR,
                     sms.getContent(),
                     sms.getSender(),
                     sms.getReceiverCard(),
+                    sms.getReceiverCardName(),
                     sdf.format(sms.getReceivedTime()),
                     sdf.format(sms.getSendTime()));
             String subject = Constants.isContentInSubject ? sms.getContent() : String.format(Locale.CHINA, "[短信转发] From:%s" + Constants.BR, sms.getSender());
-            mailText = mailText.concat(Constants.getDeviceState());
 
             MailEntity mailEntity = new MailEntity();
             mailEntity.setSendTime(System.currentTimeMillis());
@@ -44,8 +44,10 @@ public class MailSenderHelper {
     }
 
     public static void sendTestEmail() {
-        String mailText = "[短信转发]测试邮件内容";
-        mailText = mailText.concat(Constants.getDeviceState());
+        String mailText = "[短信转发]测试邮件内容" + Constants.BR
+                + "命令通过标题发送,app使用json解析的方式,不要写其他内容,否则会失败" + Constants.BR
+                + "远程控制发送短信的邮件格式:" + Constants.BR
+                + "{command=\"RemoteSmsSend\",target=\"[目标号码]\",content=\"[短信内容]\",code=\"[验证码]\"}";
         MailEntity mailEntity = new MailEntity();
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setSubject("[短信转发]测试邮件标题");
@@ -74,8 +76,9 @@ public class MailSenderHelper {
                 mailSender.setCredentials(Constants.senderEmail, Constants.senderEmailPassword);
                 mailSender.setToAddresses(new String[]{Constants.receiverEmail});
                 mailSender.setSubject(mailEntity.getSubject());
-                mailSender.setMailText(mailEntity.getContent());
+                mailSender.setMailText(mailEntity.getContent() + Constants.BR + Constants.getDeviceState());
                 mailSender.send();
+
                 if (onMailSentCallback != null) {
                     onMailSentCallback.onSuccess(mailEntity);
                 }

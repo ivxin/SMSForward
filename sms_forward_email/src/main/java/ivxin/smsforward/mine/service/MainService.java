@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
@@ -115,6 +114,7 @@ public class MainService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Constants.loadConfigFromSP(this.getApplicationContext());
         registerReceivers();
         Notification notification = showOnGoingNotification();
         startForeground(1, notification);
@@ -142,15 +142,12 @@ public class MainService extends Service {
             MailFetchUtil mailFetchUtil = new MailFetchUtil();
             mailFetchUtil.setProperties(Constants.commandMailHost, Constants.commandUsername, Constants.commandPassword);
             CommandEmail commandEmail = mailFetchUtil.fetchIMAPEmail();
+            if (emailCheckCallBack != null) {
+                emailCheckCallBack.onMailReceived(commandEmail, System.currentTimeMillis());
+            }
             if (commandEmail == null) {
-                Looper.prepare();
-                Toast.makeText(MainService.this.getApplicationContext(), "收信邮箱配置异常", Toast.LENGTH_SHORT).show();
-                Looper.loop();
                 return;
             }
-            Looper.prepare();
-            Toast.makeText(MainService.this.getApplicationContext(), "检查到邮件:" + commandEmail.getSubject(), Toast.LENGTH_LONG).show();
-            Looper.loop();
             if (!Constants.isLastMail(MainService.this, commandEmail.getMessageId())) {
                 Constants.saveLastMail(MainService.this, commandEmail);
                 String subject = commandEmail.getSubject();
@@ -164,6 +161,16 @@ public class MainService extends Service {
         }
     }
 
+    private static EmailCheckCallBack emailCheckCallBack;
+
+    public static void setEmailCheckCallBack(EmailCheckCallBack emailCheckCallBack) {
+        MainService.emailCheckCallBack = emailCheckCallBack;
+    }
+
+    public interface EmailCheckCallBack {
+        void onMailReceived(CommandEmail commandEmail, long receivedTime);
+    }
+
     private void parseCommand(String mailSubject) {
         try {
             JSONObject jsonObject = new JSONObject(mailSubject);
@@ -173,9 +180,10 @@ public class MainService extends Service {
             if (Constants.commandCode.equals(code)) {
                 SmsSender.send(smsContent, target);
                 String subject = "[短信转发]远程短信已发送";
-                String content = "短信内容:" + smsContent;
+                String content = "短信内容:" + smsContent + Constants.BR + "目标号码:" + target;
 
                 MailEntity mailEntity = new MailEntity();
+                mailEntity.setReceiver(Constants.receiverEmail);
                 mailEntity.setSubject(subject);
                 mailEntity.setContent(content);
                 mailEntity.setSendTime(System.currentTimeMillis());
@@ -186,6 +194,7 @@ public class MainService extends Service {
             String subject = "[短信转发]远程短信发送失败";
             String content = mailSubject + Constants.BR + e.getLocalizedMessage();
             MailEntity mailEntity = new MailEntity();
+            mailEntity.setReceiver(Constants.receiverEmail);
             mailEntity.setSubject(subject);
             mailEntity.setContent(content);
             mailEntity.setSendTime(System.currentTimeMillis());

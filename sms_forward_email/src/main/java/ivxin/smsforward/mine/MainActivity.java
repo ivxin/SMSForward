@@ -56,6 +56,7 @@ public class MainActivity extends BaseActivity {
     private ProgressBar pb_battery;
     private ProgressBar pb_signal;
 
+    private TextView tv_last_mail_info;
     private TextView tv_battery;
     private TextView tv_ping;
 
@@ -136,7 +137,16 @@ public class MainActivity extends BaseActivity {
 
         page = 0;
         getMailData(page);
-
+        MainService.setEmailCheckCallBack((commandEmail, receivedTime) -> runOnUiThread(() -> {
+            if (!isFinishing()) {
+                tv_last_mail_info.setVisibility(Constants.remoteSentSms && Constants.started ? View.VISIBLE : View.GONE);
+                if (commandEmail == null) {
+                    tv_last_mail_info.setText("接收邮件配置有误");
+                } else {
+                    tv_last_mail_info.setText(String.format("最近邮件\n邮件主题:%s\n获取时间:%s", commandEmail.getSubject(), String.format(Locale.CHINA, "%tF %tT", receivedTime, receivedTime)));
+                }
+            }
+        }));
         MailSenderHelper.setOnMailSentCallback(new MailSenderHelper.OnMailSentCallback() {
             @Override
             public void onSuccess(MailEntity mailEntity) {
@@ -269,6 +279,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initView() {
+        tv_last_mail_info = (TextView) findViewById(R.id.tv_last_mail_info);
         tv_battery = (TextView) findViewById(R.id.tv_battery);
         tv_ping = (TextView) findViewById(R.id.tv_ping);
         iv_battery = (ImageView) findViewById(R.id.iv_battery);
@@ -353,6 +364,7 @@ public class MainActivity extends BaseActivity {
         loadConfig();
         cb_remote_sent_sms.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Constants.remoteSentSms = isChecked;
+            tv_last_mail_info.setVisibility(Constants.remoteSentSms && Constants.started ? View.VISIBLE : View.GONE);
             findViewById(R.id.tv_command_title).setVisibility(isChecked ? View.VISIBLE : View.GONE);
             findViewById(R.id.tr_serverhost).setVisibility(isChecked ? View.VISIBLE : View.GONE);
             findViewById(R.id.tr_command_username).setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -360,6 +372,7 @@ public class MainActivity extends BaseActivity {
             findViewById(R.id.tr_command_code).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
             findViewById(R.id.tr_command_check_time).setVisibility(isChecked ? View.VISIBLE : View.GONE);
         });
+        tv_last_mail_info.setOnClickListener(v -> tv_last_mail_info.setVisibility(View.GONE));
         cb_autentication.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.autenticationEnabled = isChecked);
         cb_content_send_via_subject.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.isContentInSubject = isChecked);
         cb_send_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.incomingCallMail = isChecked);
@@ -514,6 +527,7 @@ public class MainActivity extends BaseActivity {
         cb_keep_screen_on.setChecked(Constants.keepScreenOn);
 
         cb_remote_sent_sms.setChecked(Constants.remoteSentSms);
+        tv_last_mail_info.setVisibility(Constants.remoteSentSms && Constants.started ? View.VISIBLE : View.GONE);
         findViewById(R.id.tv_command_title).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
         findViewById(R.id.tr_serverhost).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
         findViewById(R.id.tr_command_username).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);

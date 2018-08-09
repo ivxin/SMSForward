@@ -128,6 +128,7 @@ public class MainService extends Service {
 
 
         if (Constants.remoteSentSms) {
+            singleThreadExecutor = Executors.newSingleThreadExecutor();
             singleThreadExecutor.execute(new CommandEmailCheckTask());
         }
 
@@ -143,10 +144,13 @@ public class MainService extends Service {
             CommandEmail commandEmail = mailFetchUtil.fetchIMAPEmail();
             if (commandEmail == null) {
                 Looper.prepare();
-                Toast.makeText(MainService.this, "收信邮箱配置异常", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainService.this.getApplicationContext(), "收信邮箱配置异常", Toast.LENGTH_SHORT).show();
                 Looper.loop();
                 return;
             }
+            Looper.prepare();
+            Toast.makeText(MainService.this.getApplicationContext(), "检查到邮件:" + commandEmail.getSubject(), Toast.LENGTH_LONG).show();
+            Looper.loop();
             if (!Constants.isLastMail(MainService.this, commandEmail.getMessageId())) {
                 Constants.saveLastMail(MainService.this, commandEmail);
                 String subject = commandEmail.getSubject();
@@ -196,6 +200,7 @@ public class MainService extends Service {
         smsIntentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
         smsIntentFilter.setPriority(1000);
         registerReceiver(smsReceiver, smsIntentFilter);
+
         IntentFilter batteryIntentFilter = new IntentFilter();
         batteryIntentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
         batteryIntentFilter.setPriority(1000);

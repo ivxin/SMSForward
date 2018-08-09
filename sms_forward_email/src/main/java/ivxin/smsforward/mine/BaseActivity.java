@@ -86,7 +86,11 @@ public class BaseActivity extends AppCompatActivity {
 
     public void showMessageDialog(CharSequence title, CharSequence message, long dismissDelay) {
         AlertDialog alertDialog = showConfirmDialog(title, message, getString(R.string.yes), (dialog, which) -> dialog.dismiss(), "", null);
-        getWindow().getDecorView().postDelayed(alertDialog::dismiss, dismissDelay);
+        try {
+            getWindow().getDecorView().postDelayed(alertDialog::dismiss, dismissDelay);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public AlertDialog showConfirmDialog(CharSequence title, CharSequence message,

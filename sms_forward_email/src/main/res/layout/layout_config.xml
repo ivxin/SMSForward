@@ -184,7 +184,7 @@
             android:id="@+id/cb_remote_sent_sms"
             android:layout_marginTop="10dp"
             android:layout_weight="1"
-            android:checked="true"
+            android:checked="false"
             android:text="@string/remote_send_sms"
             android:textColor="@android:color/black"
             android:textSize="12sp" />

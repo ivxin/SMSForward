@@ -66,7 +66,7 @@ public class Constants {
     public static boolean rejectIncomingCalls = false;
     public static boolean keepScreenOn = true;
 
-    public static boolean remoteSentSms = true;
+    public static boolean remoteSentSms = false;
 
     public static String commandMailHost = "imap.qq.com";
     public static String commandUsername = "";
@@ -121,7 +121,7 @@ public class Constants {
         incomingCallMail = sp.getBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, false);
         rejectIncomingCalls = sp.getBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, false);
         keepScreenOn = sp.getBoolean(SP_KEYS.KEY_KEEP_SCREEN_ON, true);
-        remoteSentSms = sp.getBoolean(SP_KEYS.KEY_REMOTE_SEND_SMS, true);
+        remoteSentSms = sp.getBoolean(SP_KEYS.KEY_REMOTE_SEND_SMS, false);
         commandMailHost = sp.getString(SP_KEYS.KEY_COMMAND_SERVER_HOST, "");
         commandUsername = sp.getString(SP_KEYS.KEY_COMMAND_USERNAME, "");
         commandPassword = sp.getString(SP_KEYS.KEY_COMMAND_PASSWORD, "");

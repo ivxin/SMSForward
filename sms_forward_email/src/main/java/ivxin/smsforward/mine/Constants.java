@@ -72,10 +72,10 @@ public class Constants {
     public static String commandUsername = "";
     public static String commandPassword = "";
     public static int commandCheckTime = 60;
-    public static String commandCode="";
+    public static String commandCode = "";
 
     public static int battery_level;
-    public static boolean battery_low_warning_send = false;
+    public static long battery_low_warning_last_time;
     public static boolean isCharging;
     public static String networkState;
     public static boolean isRinging = false;

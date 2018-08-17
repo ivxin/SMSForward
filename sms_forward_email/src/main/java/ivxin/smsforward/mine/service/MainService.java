@@ -69,20 +69,15 @@ public class MainService extends Service {
 
     private BatteryReceiver.OnBatteryInfoUpdateListener onBatteryInfoUpdateListener = (action, status, percent) -> {
         Constants.battery_level = percent;
-        if (percent == 15 || percent == 5) {
-            Constants.battery_low_warning_send = false;
-        }
-        if (percent > 30) {
-            Constants.battery_low_warning_send = false;
-        } else {
-            if (!Constants.battery_low_warning_send) {
-                Constants.battery_low_warning_send = true;
+        if (percent <= 15) {
+            if (System.currentTimeMillis() - Constants.battery_low_warning_last_time >= 10 * 60 * 1000) {
                 MailEntity mailEntity = new MailEntity();
                 mailEntity.setSendTime(System.currentTimeMillis());
                 mailEntity.setReceiver(Constants.receiverEmail);
                 mailEntity.setSubject("低电量提醒：" + Constants.battery_level);
                 mailEntity.setContent("低电量：" + Constants.battery_level);
                 MailSenderHelper.sendEmail(mailEntity);
+                Constants.battery_low_warning_last_time = System.currentTimeMillis();
             }
         }
     };

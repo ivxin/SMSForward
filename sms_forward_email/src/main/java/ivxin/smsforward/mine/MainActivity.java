@@ -77,6 +77,7 @@ public class MainActivity extends BaseActivity {
     private CheckBox cb_reject_incoming_call;
     private CheckBox cb_remote_sent_sms;
 
+    private TextView tv_copy_config;
     private EditText et_command_host;
     private EditText et_command_username;
     private EditText et_command_password;
@@ -163,7 +164,7 @@ public class MainActivity extends BaseActivity {
                     page = 0;
                     getMailData(page);
                 });
-                if (mailEntity.getContent().contains("restart")) {
+                if (mailEntity.getContent().contains(Constants.COMMAND_RESTART)) {
                     Bundle data = new Bundle();
                     data.putString("message", "App已经成功重启");
                     MyApplication.restartApplication(activity, data);
@@ -306,7 +307,7 @@ public class MainActivity extends BaseActivity {
         btn_test_email = (Button) findViewById(R.id.btn_test_email);
         cb_keep_screen_on = (CheckBox) findViewById(R.id.cb_keep_screen_on);
         btn_edit_config = (ToggleButton) findViewById(R.id.btn_edit_config);
-
+        tv_copy_config = findViewById(R.id.tv_copy_config);
         et_command_host = findViewById(R.id.et_command_host);
         et_command_username = findViewById(R.id.et_command_username);
         et_command_password = findViewById(R.id.et_command_password);
@@ -385,7 +386,6 @@ public class MainActivity extends BaseActivity {
                     ll_mail_send_log.setVisibility(Constants.started ? View.VISIBLE : View.GONE);
                     sv_config.setVisibility(Constants.started ? View.GONE : View.VISIBLE);
                     if (Constants.started) {
-                        toast(getString(R.string.check_tip), Toast.LENGTH_LONG);
                         startService(new Intent(MainActivity.this.getApplicationContext(), MainService.class));
                     }
                     saveConfig();
@@ -406,7 +406,7 @@ public class MainActivity extends BaseActivity {
         });
         btn_test_email.setOnClickListener(v -> {
             saveConfig();
-            MailSenderHelper.sendTestEmail();
+            MailSenderHelper.sendTestEmail(this);
         });
         tv_clear_log.setOnClickListener(v -> showConfirmDialog("", getString(R.string.delete_all_log), getString(R.string.yes), (dialog, which) -> {
             dialog.dismiss();
@@ -420,6 +420,14 @@ public class MainActivity extends BaseActivity {
                     setKeepScreenOn(isChecked);
                 }
         );
+        tv_copy_config.setOnClickListener(v -> {
+            String commandHost = et_server_host.getText().toString();
+            commandHost = commandHost.replace("smtp", "imap").replace("pop3", "imap");
+            commandHost = commandHost.replace("pop", "smtp");
+            et_command_host.setText(commandHost);
+            et_command_username.setText(et_sender_email.getText());
+            et_command_password.setText(et_sender_email_password.getText());
+        });
     }
 
     private class PingUIRunnable implements Runnable {

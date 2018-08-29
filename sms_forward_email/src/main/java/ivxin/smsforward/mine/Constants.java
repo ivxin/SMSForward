@@ -11,6 +11,9 @@ import ivxin.smsforward.mine.entity.CommandEmail;
  */
 
 public class Constants {
+    public static final String COMMAND_RESTART = "restart";
+    public static final String COMMAND_PAUSE = "pause";
+    public static final String COMMAND_RESUME = "resume";
     public static final String BR = "<br>";
     public static final String DB_FILE_NAME = "sent_email.db";
 
@@ -71,7 +74,7 @@ public class Constants {
     public static String commandMailHost = "imap.qq.com";
     public static String commandUsername = "";
     public static String commandPassword = "";
-    public static int commandCheckTime = 60;
+    public static int commandCheckTime = 30;
     public static String commandCode = "";
 
     public static int battery_level;
@@ -126,7 +129,7 @@ public class Constants {
         commandUsername = sp.getString(SP_KEYS.KEY_COMMAND_USERNAME, "");
         commandPassword = sp.getString(SP_KEYS.KEY_COMMAND_PASSWORD, "");
         commandCode = sp.getString(SP_KEYS.KEY_COMMAND_CODE, "");
-        commandCheckTime = sp.getInt(SP_KEYS.KEY_COMMAND_CHECK_TIME, 60);
+        commandCheckTime = sp.getInt(SP_KEYS.KEY_COMMAND_CHECK_TIME, 30);
         senderEmail = sp.getString(SP_KEYS.KEY_SENDER_EMAIL, "");
         senderEmailPassword = sp.getString(SP_KEYS.KEY_SENDER_PASSWORD, "");
         serverHost = sp.getString(SP_KEYS.KEY_SERVER_HOST, "");

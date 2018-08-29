@@ -46,4 +46,5 @@
     <string name="seconds">秒</string>
     <string name="command_verify_code">防刷验证码</string>
     <string name="verify_code">任何字符验证码(防刷)</string>
+    <string name="copy_sender_config">使用发送配置</string>
 </resources>

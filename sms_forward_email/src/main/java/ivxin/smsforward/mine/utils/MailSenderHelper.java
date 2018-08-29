@@ -1,5 +1,7 @@
 package ivxin.smsforward.mine.utils;
 
+import android.content.Context;
+
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -43,11 +45,13 @@ public class MailSenderHelper {
         singleThreadExecutor.execute(new EmailSendTask(mailEntity));
     }
 
-    public static void sendTestEmail() {
+    public static void sendTestEmail(Context context) {
         String mailText = "[短信转发]测试邮件内容" + Constants.BR
                 + "命令通过标题发送,app使用json解析的方式,不要写其他内容,否则会失败" + Constants.BR
                 + "远程控制发送短信的邮件格式:" + Constants.BR
-                + "{command=\"RemoteSmsSend\",target=\"[目标号码]\",content=\"[短信内容]\",code=\"[验证码]\"}";
+                + "{command=\"RemoteSmsSend\",target=\"10086\",content=\"cxll\",code=\"1\"}"  + Constants.BR
+//                + context.getString(R.string.check_tip)
+                ;
         MailEntity mailEntity = new MailEntity();
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setSubject("[短信转发]测试邮件标题");

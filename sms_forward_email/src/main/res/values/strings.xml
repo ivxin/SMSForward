@@ -46,4 +46,5 @@
     <string name="seconds">seconds</string>
     <string name="command_verify_code">Command Verify Code</string>
     <string name="verify_code">Verify Code</string>
+    <string name="copy_sender_config">Copy Sender Config</string>
 </resources>

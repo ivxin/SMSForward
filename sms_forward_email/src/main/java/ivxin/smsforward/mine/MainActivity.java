@@ -366,6 +366,7 @@ public class MainActivity extends BaseActivity {
         cb_remote_sent_sms.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Constants.remoteSentSms = isChecked;
             tv_last_mail_info.setVisibility(Constants.remoteSentSms && Constants.started ? View.VISIBLE : View.GONE);
+            tv_copy_config.setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
             findViewById(R.id.tv_command_title).setVisibility(isChecked ? View.VISIBLE : View.GONE);
             findViewById(R.id.tr_serverhost).setVisibility(isChecked ? View.VISIBLE : View.GONE);
             findViewById(R.id.tr_command_username).setVisibility(isChecked ? View.VISIBLE : View.GONE);
@@ -418,8 +419,7 @@ public class MainActivity extends BaseActivity {
         cb_keep_screen_on.setOnCheckedChangeListener((buttonView, isChecked) -> {
                     Constants.keepScreenOn = isChecked;
                     setKeepScreenOn(isChecked);
-                }
-        );
+        });
         tv_copy_config.setOnClickListener(v -> {
             String commandHost = et_server_host.getText().toString();
             commandHost = commandHost.replace("smtp", "imap").replace("pop3", "imap");
@@ -542,6 +542,7 @@ public class MainActivity extends BaseActivity {
         findViewById(R.id.tr_command_password).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
         findViewById(R.id.tr_command_code).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
         findViewById(R.id.tr_command_check_time).setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
+        tv_copy_config.setVisibility(Constants.remoteSentSms ? View.VISIBLE : View.GONE);
         et_command_host.setText(Constants.commandMailHost);
         et_command_username.setText(Constants.commandUsername);
         et_command_password.setText(Constants.commandPassword);

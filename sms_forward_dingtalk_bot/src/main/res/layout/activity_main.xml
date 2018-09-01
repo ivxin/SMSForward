@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="10dp"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tv_status"
+        android:gravity="center" />
+
+    <TableRow android:orientation="horizontal">
+
+        <TextView
+            android:gravity="end|center_vertical"
+            android:text="钉钉BOT TOKEN" />
+
+        <TextView
+            android:id="@+id/tv_token"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:hint="点击输入钉钉机器人TOKEN"
+            android:paddingBottom="20dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="20dp" />
+
+
+    </TableRow>
+
+    <TableRow android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/cb_keep_screen_on"
+            android:text="保持屏幕常亮" />
+
+        <CheckBox
+            android:id="@+id/cb_reject_call"
+            android:text="拒接电话" />
+
+
+    </TableRow>
+
+
+    <ToggleButton
+        android:id="@+id/tv_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOff="保存 开始"
+        android:textOn="停止 修改" />
+
+    <TextView android:id="@+id/tv_last_forward" />
+
+
+</TableLayout>

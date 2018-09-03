@@ -53,7 +53,8 @@ public class MainActivity extends BaseActivity {
             default:
                 break;
             case R.id.menu_help:
-                showMessageDialog("帮助", AssertReader.readStringFromAssertFile(this, "help.txt"));
+                AssertReader.readStringFromAssertFile(this, "help.txt", string -> showMessageDialog("帮助", string));
+//                showMessageDialog("帮助", AssertReader.readStringFromAssertFile(this, "help.txt"));
                 break;
         }
         return true;
@@ -85,7 +86,7 @@ public class MainActivity extends BaseActivity {
             if (Constants.spLoadBoolean(MainActivity.this, Constants.REJECT_INCOMING_KEY) && Constants.isRinging) {
                 SignalUtil.endcall(MainActivity.this);
             }
-            Constants.spSave(MainActivity.this, Constants.LAST_FORWARD_KEY, String.format(Locale.CHINA, "%s\n%s", result, message));
+            Constants.spSave(MainActivity.this, Constants.LAST_FORWARD_KEY, String.format(Locale.CHINA, "%s\n\n%s", result, message));
             runOnUiThread(() -> {
                 if (!isFinishing() && tv_last_forward != null) {
                     tv_last_forward.setText(String.format(Locale.CHINA, "%s\n\n%s", result, message));

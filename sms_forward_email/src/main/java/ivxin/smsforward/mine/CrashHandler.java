@@ -184,7 +184,7 @@ public class CrashHandler implements UncaughtExceptionHandler {
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setReceiver(Constants.receiverEmail);
         mailEntity.setSubject("[异常退出]" + ex.getMessage());
-        mailEntity.setContent(sb.toString() + Constants.BR + Constants.BR + "请转发次邮件到 ivxin@qq.com");
+        mailEntity.setContent(sb.toString() + Constants.BR + Constants.BR + "请转发此邮件到 ivxin@qq.com");
         MailSenderHelper.sendEmail(mailEntity);
         try {
             long timestamp = System.currentTimeMillis();

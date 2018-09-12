@@ -19,9 +19,11 @@ import java.util.concurrent.Executors;
 
 import ivxin.sms_forward_ding_talk_bot.constants.Constants;
 import ivxin.sms_forward_ding_talk_bot.service.MainService;
-import ivxin.sms_forward_ding_talk_bot.util.AssertReader;
-import ivxin.sms_forward_ding_talk_bot.util.DingTalkBotSenderUtil;
-import ivxin.sms_forward_ding_talk_bot.util.SignalUtil;
+import ivxin.smsforward.lib.base.BaseActivity;
+import ivxin.smsforward.lib.base.OnPermissionCheckedListener;
+import ivxin.smsforward.lib.utils.AssertReader;
+import ivxin.smsforward.lib.utils.DingTalkBotSenderUtil;
+import ivxin.smsforward.lib.utils.SignalUtil;
 
 public class MainActivity extends BaseActivity {
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();

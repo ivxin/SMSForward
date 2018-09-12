@@ -26,7 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import ivxin.sms_forward_ding_talk_bot.constants.Constants;
-import ivxin.sms_forward_ding_talk_bot.util.DingTalkBotSenderUtil;
+import ivxin.smsforward.lib.utils.DingTalkBotSenderUtil;
 
 /**
  * UncaughtException处理类,当程序发生Uncaught异常的时候,有该类来接管程序,并记录发送错误报告.

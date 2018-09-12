@@ -1,1 +1,1 @@
-include ':app', ':sms_forward_email', ':sms_forward_dingtalk_bot'
+include ':sms_forward_sms', ':sms_forward_email', ':sms_forward_dingtalk_bot', ':sms_forward_lib', ':incoming_call_query'

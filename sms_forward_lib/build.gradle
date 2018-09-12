@@ -1,10 +1,9 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 27
 
     defaultConfig {
-        applicationId "ivxin.sms_forward_ding_talk_bot"
         minSdkVersion 15
         targetSdkVersion 27
         versionCode 1
@@ -17,6 +16,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -24,7 +24,6 @@ android {
 }
 
 dependencies {
-    implementation project(':sms_forward_lib')
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:27.1.1'
     implementation 'org.jsoup:jsoup:1.11.3'

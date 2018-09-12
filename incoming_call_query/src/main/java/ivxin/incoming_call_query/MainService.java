@@ -1,4 +1,4 @@
-package ivxin.sms_forward_ding_talk_bot.service;
+package ivxin.incoming_call_query;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -7,58 +7,71 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.BatteryManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.View;
+import android.webkit.WebView;
+import android.widget.ImageView;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import ivxin.sms_forward_ding_talk_bot.MainActivity;
-import ivxin.sms_forward_ding_talk_bot.R;
-import ivxin.sms_forward_ding_talk_bot.constants.Constants;
-import ivxin.smsforward.lib.receiver.BatteryReceiver;
-import ivxin.smsforward.lib.receiver.SMSReceiver;
 import ivxin.smsforward.lib.service.BaseService;
 import ivxin.smsforward.lib.utils.DingTalkBotSenderUtil;
+import ivxin.smsforward.lib.utils.html2md.HTML2Md;
 import ivxin.smsforward.lib.utils.PhoneNumberJudge;
 import ivxin.smsforward.lib.utils.SignalUtil;
 
 public class MainService extends BaseService {
+    private MyHandler handler;
     public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private TelephonyManager mTelephonyManager;
     private NotificationManager mNotificationManager;
-    private SMSReceiver smsReceiver = new SMSReceiver();
-    private BatteryReceiver batteryReceiver = new BatteryReceiver();
+    public WebView wv_result;
+    private FloatWindow floatWindow;
+
+    public static final String contentFormat = "<b><big>[%s]来电</big></b><br>%s<br><br>360查询结果:<br>%s<br><br>百度查询结果:<br>%s<br><br>114查询结果:<br>%s<br><br>";
+    public static String incomingNumber = "";
+    public static String result360 = "查询中";
+    public static String result114 = "查询中";
+    public static String resultBaidu = "查询中";
+    public static long callTime;
+    public static byte resultCount = 0;
 
 
     @Override
     public void onCreate() {
         super.onCreate();
+        initFloatWindow();
+        handler = new MyHandler(this);
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, timestampMillis) -> {
-            String message = String.format(Locale.CHINA, "%s\n\n发信人:%s\n接收时间:%s", content, sender, sdf.format(timestampMillis));
-            singleThreadExecutor.execute(() -> DingTalkBotSenderUtil.postDingTalk(Constants.spLoad(MainService.this, Constants.TOKEN_KEY, Constants.DING_TALK_BOT_TOKEN),
-                    message));
-        });
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        boolean started = Constants.spLoadBoolean(this, Constants.START_KEY);
-        if (Constants.HAVE_PERMISSION && started) {
-            startServiceAgainViaAlarm();
-            registerReceivers();
-        }
+        startServiceAgainViaAlarm();
+        registerReceivers();
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    private void initFloatWindow() {
+        View view = View.inflate(this, R.layout.layout_float_window, null);
+        wv_result = view.findViewById(R.id.wv_result);
+        ImageView iv_hide = view.findViewById(R.id.iv_hide);
+        iv_hide.setOnClickListener(v -> floatWindow.hideFloatWindow());
+        floatWindow = new FloatWindow(this, view);
+        floatWindow.setFloatWindowWidth((int) (FloatWindow.getScreenWidth(this) * 0.8));
+        wv_result.setOnTouchListener(floatWindow);
     }
 
     @Nullable
@@ -73,47 +86,25 @@ public class MainService extends BaseService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, channelId);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_MIN);
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, content.length() > 0 ? NotificationManager.IMPORTANCE_HIGH : NotificationManager.IMPORTANCE_MIN);
             mNotificationManager.createNotificationChannel(channel);
         }
-        String contentText = Constants.spLoadBoolean(this, Constants.START_KEY) ? "已启动转发" : "已停止转发";
-        mBuilder.setContentTitle(getString(R.string.app_name) + "正在运行")//设置通知栏标题
-                .setContentText(contentText) //设置通知栏显示内容
+        mBuilder.setContentTitle(channelName + "正在运行")//设置通知栏标题
+                .setContentText(content) //设置通知栏显示内容
                 .setContentIntent(pendingIntent) //设置通知栏点击意图
-                //  .setNumber(number) //设置通知集合的数量
-                .setTicker(getString(R.string.app_name) + "已启动") //通知首次出现在通知栏，带上升动画效果的
                 .setWhen(System.currentTimeMillis())//通知产生的时间，会在通知信息里显示，一般是系统获取到的时间
-                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setPriority(content.length() > 0 ? NotificationCompat.PRIORITY_HIGH : NotificationCompat.PRIORITY_MIN)
                 .setAutoCancel(false)//设置这个标志当用户单击面板就可以让通知将自动取消
                 .setOngoing(true)//ture，设置他为一个正在进行的通知。他们通常是用来表示一个后台任务,用户积极参与(如播放音乐)或以某种方式正在等待,因此占用设备(如一个文件下载,同步操作,主动网络连接)
                 //                                .setDefaults(Notification.DEFAULT_VIBRATE)//向通知添加声音、闪灯和振动效果的最简单、最一致的方式是使用当前的用户默认设置，使用defaults属性，可以组合
                 //Notification.DEFAULT_ALL  Notification.DEFAULT_SOUND 添加声音 // requires VIBRATE permission
-                .setSmallIcon(R.drawable.sms_rew);//设置通知小ICON
+                .setSmallIcon(R.drawable.ic_search_white_24dp);//设置通知小ICON
         Notification notification = mBuilder.build();
         mNotificationManager.notify(1, notification);
         return notification;
     }
 
-    private void hideOnGoingNotification() {
-        if (mNotificationManager != null) {
-            mNotificationManager.cancelAll();
-        }
-    }
-
     private void registerReceivers() {
-        IntentFilter smsIntentFilter = new IntentFilter();
-        smsIntentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
-        smsIntentFilter.setPriority(1000);
-        registerReceiver(smsReceiver, smsIntentFilter);
-
-        IntentFilter batteryIntentFilter = new IntentFilter();
-        batteryIntentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        batteryIntentFilter.setPriority(1000);
-        registerReceiver(batteryReceiver, batteryIntentFilter);
-
-        BatteryReceiver.removeOnBatteryInfoUpdateListener(onBatteryInfoUpdateListener);
-        BatteryReceiver.addOnBatteryInfoUpdateListener(onBatteryInfoUpdateListener);
-
         if (Constants.HAVE_PERMISSION) {
             mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
             mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_SIGNAL_STRENGTHS |
@@ -125,46 +116,85 @@ public class MainService extends BaseService {
     public void onDestroy() {
         super.onDestroy();
         mTelephonyManager.listen(mListener, SignalUtil.SignalListener.LISTEN_NONE);
-        unregisterReceiver(smsReceiver);
-        unregisterReceiver(batteryReceiver);
     }
+
 
     private SignalUtil.SignalListener mListener = new SignalUtil.SignalListener(this, null, (state, incomingNumber) -> {
         switch (state) {
             case TelephonyManager.CALL_STATE_IDLE:
                 Log.d(TAG, "onCallStateChanged:CALL_STATE_IDLE " + incomingNumber);
+                reset();
                 break;
             case TelephonyManager.CALL_STATE_OFFHOOK:
                 Log.d(TAG, "onCallStateChanged: CALL_STATE_OFFHOOK " + incomingNumber);
+                reset();
                 break;
             case TelephonyManager.CALL_STATE_RINGING:
                 Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING " + incomingNumber);
-                if (Constants.spLoadBoolean(this, Constants.START_KEY)) {
-                    singleThreadExecutor.execute(() -> {
-                        long callTime = System.currentTimeMillis();
+                callTime = System.currentTimeMillis();
+
+                MainService.incomingNumber = incomingNumber;
+                floatWindow.showFloatWindow();
+                singleThreadExecutor.execute(new Runnable() {
+                    void sendMessage() {
+                        String content = String.format(contentFormat, incomingNumber, sdf.format(callTime), result360, resultBaidu, result114);
+
+                        if (resultCount == 3) {
+                            Constants.spSave(MainService.this, Constants.KEY_LAST_QUERY, content);
+                            if (Constants.spLoadBoolean(MainService.this, Constants.KEY_DING_TALK_FORWARD)) {
+                                try {
+                                    DingTalkBotSenderUtil.postDingTalkMarkDownMessage(Constants.spLoad(MainService.this, Constants.KEY_DING_TALK_TOKEN),
+                                            incomingNumber, HTML2Md.convertHtml(content, "utf-8"));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                        Message msg = handler.obtainMessage();
+                        msg.obj = content;
+                        handler.sendMessage(msg);
+                    }
+
+                    @Override
+                    public void run() {
                         PhoneNumberJudge netJudge = new PhoneNumberJudge();
-                        netJudge.judgeNumberFrom360(incomingNumber, result -> DingTalkBotSenderUtil.postDingTalk(
-                                Constants.spLoad(MainService.this, Constants.TOKEN_KEY, Constants.DING_TALK_BOT_TOKEN),
-                                String.format(Locale.CHINA, "[%s] 来电\n查询结果：%s \n呼叫时间:%s", incomingNumber, result, sdf.format(callTime)))
+                        netJudge.judgeNumberFrom360(incomingNumber, result -> {
+                                    result360 = result;
+                                    resultCount++;
+                                    sendMessage();
+                                    showOnGoingNotification(result360);
+                                }
                         );
-                    });
-                }
+                        netJudge.judgeNumberFromBaidu(incomingNumber, result -> {
+                                    resultBaidu = result;
+                                    resultCount++;
+                                    sendMessage();
+                                }
+                        );
+                        netJudge.judgeNumberFrom114(incomingNumber, result -> {
+                                    result114 = result;
+                                    resultCount++;
+                                    sendMessage();
+                                }
+                        );
+                    }
+                });
                 break;
         }
 
     });
 
-    private BatteryReceiver.OnBatteryInfoUpdateListener onBatteryInfoUpdateListener = (action, status, percent) -> {
-        boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL;
-        if (percent <= 15) {
-            if (System.currentTimeMillis() - Constants.battery_low_warning_last_time >= 10 * 60 * 1000) {
-                singleThreadExecutor.execute(() -> DingTalkBotSenderUtil.postDingTalk(Constants.spLoad(MainService.this, Constants.TOKEN_KEY, Constants.DING_TALK_BOT_TOKEN),
-                        String.format(Locale.CHINA, "设备:%s 低电量\n充电状态:%s 电量:%d\n提示时间:%s", Constants.DEVICE_NAME, isCharging, percent, sdf.format(System.currentTimeMillis()))));
-                Constants.battery_low_warning_last_time = System.currentTimeMillis();
-            }
-        }
-    };
+    public void reset() {
+        floatWindow.hideFloatWindow();
+        wv_result.loadDataWithBaseURL("", "", "text/html", "UTF-8", "");
+        incomingNumber = "";
+        result360 = "查询中";
+        result114 = "查询中";
+        resultBaidu = "查询中";
+        callTime = 0;
+        resultCount = 0;
+    }
 
     private void startServiceAgainViaAlarm() {
         Intent intent = new Intent();
@@ -180,5 +210,20 @@ public class MainService extends BaseService {
                     restartIntent);
         }
 
+    }
+
+    private static class MyHandler extends Handler {
+        MainService service;
+
+        private MyHandler(MainService service) {
+            this.service = service;
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            String content = (String) msg.obj;
+            service.wv_result.loadDataWithBaseURL("", content, "text/html", "UTF-8", "");
+        }
     }
 }

@@ -113,13 +113,15 @@ public class MainService extends Service {
     private void sendMail(String incomingNumber) {
         if (resultCount == 3) {
             AssertReader.readStringFromAssertFile(this, "crank_call_keywords.txt", string -> {
-                String result = result360 + Constants.BR + Constants.BR + resultBaidu + Constants.BR + Constants.BR + result114;
+                String result = "360查询结果：" + result360 + Constants.BR + Constants.BR
+                        + "百度查询结果：" + resultBaidu + Constants.BR + Constants.BR
+                        + "114查询结果：" + Constants.BR + result114;
 
                 boolean isCrankCall = false;
                 String phoneCallTag = "正常";
-                String[] lines = string.split("|");
+                String[] lines = string.split(",");
                 for (String line : lines) {
-                    if (result.contains(line)) {
+                    if (!TextUtils.isEmpty(line) && result.contains(line)) {
                         isCrankCall = true;
                         phoneCallTag = line;
                         break;
@@ -130,7 +132,7 @@ public class MainService extends Service {
                 MailEntity mailEntity = new MailEntity();
                 mailEntity.setReceiver(Constants.receiverEmail);
                 mailEntity.setSubject(subject);
-                mailEntity.setContent("来电查询结果：" + Constants.BR + result);
+                mailEntity.setContent("来电查询结果：" + Constants.BR + Constants.BR + result);
                 mailEntity.setSendTime(System.currentTimeMillis());
                 MailSenderHelper.sendEmail(mailEntity);
 
@@ -145,7 +147,7 @@ public class MainService extends Service {
                             SignalUtil.endcall(MainService.this);
                         }
                     }
-                }, 2000);
+                }, 1000);
             });
 
         }

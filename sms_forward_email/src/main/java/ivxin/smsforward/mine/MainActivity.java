@@ -31,14 +31,14 @@ import java.util.List;
 import java.util.Locale;
 
 import cn.richinfo.dualsim.TelephonyManagement;
+import ivxin.smsforward.lib.receiver.BatteryReceiver;
+import ivxin.smsforward.lib.utils.PingUtil;
+import ivxin.smsforward.lib.utils.SignalUtil;
 import ivxin.smsforward.mine.db.DataBaseService;
 import ivxin.smsforward.mine.entity.MailEntity;
 import ivxin.smsforward.mine.entity.OperCodeStr;
-import ivxin.smsforward.mine.receiver.BatteryReceiver;
 import ivxin.smsforward.mine.service.MainService;
 import ivxin.smsforward.mine.utils.MailSenderHelper;
-import ivxin.smsforward.mine.utils.PingUtil;
-import ivxin.smsforward.mine.utils.SignalUtil;
 import ivxin.smsforward.mine.view.EmailAdapter;
 import ivxin.smsforward.mine.view.MailLoadMoreView;
 
@@ -75,6 +75,7 @@ public class MainActivity extends BaseActivity {
     private CheckBox cb_content_send_via_subject;
     private CheckBox cb_send_incoming_call;
     private CheckBox cb_reject_incoming_call;
+    private CheckBox cb_ignore_crank_calls;
     private CheckBox cb_remote_sent_sms;
 
     private TextView tv_copy_config;
@@ -151,9 +152,6 @@ public class MainActivity extends BaseActivity {
         MailSenderHelper.setOnMailSentCallback(new MailSenderHelper.OnMailSentCallback() {
             @Override
             public void onSuccess(MailEntity mailEntity) {
-                if (Constants.rejectIncomingCalls && Constants.isRinging) {
-                    SignalUtil.endcall(MainActivity.this);
-                }
                 DataBaseService dataBaseService = new DataBaseService(activity);
                 dataBaseService.insertMail(mailEntity);
                 runOnUiThread(() -> {
@@ -173,9 +171,6 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onFail(Exception e) {
-                if (Constants.rejectIncomingCalls && Constants.isRinging) {
-                    SignalUtil.endcall(MainActivity.this);
-                }
                 runOnUiThread(() -> toast("Failed:" + e.getMessage()));
             }
         });
@@ -304,6 +299,7 @@ public class MainActivity extends BaseActivity {
         cb_content_send_via_subject = (CheckBox) findViewById(R.id.cb_content_send_via_subject);
         cb_send_incoming_call = (CheckBox) findViewById(R.id.cb_send_incoming_call);
         cb_reject_incoming_call = (CheckBox) findViewById(R.id.cb_reject_incoming_call);
+        cb_ignore_crank_calls = (CheckBox) findViewById(R.id.cb_ignore_crank_calls);
         btn_test_email = (Button) findViewById(R.id.btn_test_email);
         cb_keep_screen_on = (CheckBox) findViewById(R.id.cb_keep_screen_on);
         btn_edit_config = (ToggleButton) findViewById(R.id.btn_edit_config);
@@ -378,7 +374,11 @@ public class MainActivity extends BaseActivity {
         cb_autentication.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.autenticationEnabled = isChecked);
         cb_content_send_via_subject.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.isContentInSubject = isChecked);
         cb_send_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.incomingCallMail = isChecked);
-        cb_reject_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.rejectIncomingCalls = isChecked);
+        cb_reject_incoming_call.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            Constants.rejectIncomingCalls = isChecked;
+            cb_ignore_crank_calls.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+        cb_ignore_crank_calls.setOnCheckedChangeListener((buttonView, isChecked) -> Constants.ignoreCrankCalls = isChecked);
         btn_edit_config.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -417,8 +417,8 @@ public class MainActivity extends BaseActivity {
             adapter.notifyDataSetChanged();
         }, getString(R.string.no), (dialog, which) -> dialog.dismiss()));
         cb_keep_screen_on.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    Constants.keepScreenOn = isChecked;
-                    setKeepScreenOn(isChecked);
+            Constants.keepScreenOn = isChecked;
+            setKeepScreenOn(isChecked);
         });
         tv_copy_config.setOnClickListener(v -> {
             String commandHost = et_server_host.getText().toString();
@@ -532,6 +532,7 @@ public class MainActivity extends BaseActivity {
         cb_content_send_via_subject.setChecked(Constants.isContentInSubject);
         cb_send_incoming_call.setChecked(Constants.incomingCallMail);
         cb_reject_incoming_call.setChecked(Constants.rejectIncomingCalls);
+        cb_ignore_crank_calls.setChecked(Constants.ignoreCrankCalls);
         cb_keep_screen_on.setChecked(Constants.keepScreenOn);
 
         cb_remote_sent_sms.setChecked(Constants.remoteSentSms);
@@ -565,6 +566,7 @@ public class MainActivity extends BaseActivity {
         Constants.isContentInSubject = cb_content_send_via_subject.isChecked();
         Constants.incomingCallMail = cb_send_incoming_call.isChecked();
         Constants.rejectIncomingCalls = cb_reject_incoming_call.isChecked();
+        Constants.ignoreCrankCalls = cb_ignore_crank_calls.isChecked();
         Constants.keepScreenOn = cb_keep_screen_on.isChecked();
 
         Constants.remoteSentSms = cb_remote_sent_sms.isChecked();

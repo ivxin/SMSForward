@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import ivxin.smsforward.lib.utils.MailSender;
 import ivxin.smsforward.mine.Constants;
 import ivxin.smsforward.mine.entity.MailEntity;
 import ivxin.smsforward.mine.entity.SMSEntity;

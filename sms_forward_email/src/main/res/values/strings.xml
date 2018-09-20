@@ -47,4 +47,5 @@
     <string name="command_verify_code">Command Verify Code</string>
     <string name="verify_code">Verify Code</string>
     <string name="copy_sender_config">Copy Sender Config</string>
+    <string name="ignore_crank_calls">Ignore Crank Calls</string>
 </resources>

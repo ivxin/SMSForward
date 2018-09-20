@@ -1,5 +1,7 @@
 package ivxin.smsforward.lib.utils;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,6 +34,7 @@ public class DingTalkBotSenderUtil {
     }
 
     private static String post(String url, String textMsg) {
+        Log.d("POST", "url:" + url + "\ncontent:" + textMsg);
         StringBuilder result = new StringBuilder();
         try {
             // 构建URL

@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 
-import ivxin.smsforward.mine.entity.CommandEmail;
+import ivxin.smsforward.lib.entity.CommandEmail;
 
 /**
  * Created by yaping.wang on 2017/9/18.
@@ -22,6 +22,7 @@ public class Constants {
         public static final String KEY_CONTENT_IN_SUBJECT = "KEY_CONTENT_IN_SUBJECT";
         public static final String KEY_INCOMING_CALL_MAIL = "KEY_INCOMING_CALL_MAIL";
         public static final String KEY_REJECT_INCOMING_CALLS = "KEY_REJECT_INCOMING_CALLS";
+        public static final String KEY_IGNORE_CRANK_CALLS = "KEY_IGNORE_CRANK_CALLS";
         public static final String KEY_KEEP_SCREEN_ON = "KEY_KEEP_SCREEN_ON";
 
         public static final String KEY_SENDER_EMAIL = "KEY_SENDER_EMAIL";
@@ -67,6 +68,7 @@ public class Constants {
     public static boolean isContentInSubject = false;
     public static boolean incomingCallMail = false;
     public static boolean rejectIncomingCalls = false;
+    public static boolean ignoreCrankCalls = true;
     public static boolean keepScreenOn = true;
 
     public static boolean remoteSentSms = false;
@@ -100,6 +102,7 @@ public class Constants {
                 .putBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, isContentInSubject)
                 .putBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, incomingCallMail)
                 .putBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, rejectIncomingCalls)
+                .putBoolean(SP_KEYS.KEY_IGNORE_CRANK_CALLS, ignoreCrankCalls)
                 .putBoolean(SP_KEYS.KEY_KEEP_SCREEN_ON, keepScreenOn)
                 .putBoolean(SP_KEYS.KEY_REMOTE_SEND_SMS, remoteSentSms)
                 .putString(SP_KEYS.KEY_COMMAND_SERVER_HOST, commandMailHost)
@@ -122,7 +125,8 @@ public class Constants {
         started = sp.getBoolean(SP_KEYS.KEY_STARTED, false);
         isContentInSubject = sp.getBoolean(SP_KEYS.KEY_CONTENT_IN_SUBJECT, false);
         incomingCallMail = sp.getBoolean(SP_KEYS.KEY_INCOMING_CALL_MAIL, false);
-        rejectIncomingCalls = sp.getBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, false);
+        rejectIncomingCalls = sp.getBoolean(SP_KEYS.KEY_REJECT_INCOMING_CALLS, true);
+        ignoreCrankCalls = sp.getBoolean(SP_KEYS.KEY_IGNORE_CRANK_CALLS, true);
         keepScreenOn = sp.getBoolean(SP_KEYS.KEY_KEEP_SCREEN_ON, true);
         remoteSentSms = sp.getBoolean(SP_KEYS.KEY_REMOTE_SEND_SMS, false);
         commandMailHost = sp.getString(SP_KEYS.KEY_COMMAND_SERVER_HOST, "");
@@ -139,11 +143,13 @@ public class Constants {
         receiverEmail = sp.getString(SP_KEYS.KEY_RECEIVER_EMAIL, "");
     }
 
+    public static String DEVICE_NAME = Build.BRAND + " " + Build.MODEL;
+
     public static String getDeviceState() {
         return String.format(BR + "设备名称：%s" + BR +
                         "电池电量：%s" + BR +
                         "充电状态：%s" + BR +
                         "网络状态：%s" + BR,
-                Build.BRAND + " " + Build.MODEL, Constants.battery_level, Constants.isCharging ? "是" : "否", Constants.networkState);
+                DEVICE_NAME, Constants.battery_level, Constants.isCharging ? "是" : "否", Constants.networkState);
     }
 }

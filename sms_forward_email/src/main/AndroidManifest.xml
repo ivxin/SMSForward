@@ -38,7 +38,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".receiver.BootCompleteReceiver">
+        <receiver android:name="ivxin.smsforward.lib.receiver.BootCompleteReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

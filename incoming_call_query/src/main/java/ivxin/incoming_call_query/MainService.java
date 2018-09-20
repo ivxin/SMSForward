@@ -31,6 +31,7 @@ import ivxin.smsforward.lib.utils.PhoneNumberJudge;
 import ivxin.smsforward.lib.utils.SignalUtil;
 
 public class MainService extends BaseService {
+    public static final String PHONE_NUMBER_TO_QUERY = "PHONE_NUMBER_TO_QUERY";
     private MyHandler handler;
     public static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
@@ -59,6 +60,9 @@ public class MainService extends BaseService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && intent.hasExtra(PHONE_NUMBER_TO_QUERY)) {
+            phoneNumberQuery(intent.getStringExtra(PHONE_NUMBER_TO_QUERY));
+        }
         startServiceAgainViaAlarm();
         registerReceivers();
         return super.onStartCommand(intent, flags, startId);
@@ -131,59 +135,58 @@ public class MainService extends BaseService {
                 break;
             case TelephonyManager.CALL_STATE_RINGING:
                 Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING " + incomingNumber);
-                callTime = System.currentTimeMillis();
-
-                MainService.incomingNumber = incomingNumber;
                 floatWindow.showFloatWindow();
-                singleThreadExecutor.execute(new Runnable() {
-                    void sendMessage() {
-                        String content = String.format(contentFormat, incomingNumber, sdf.format(callTime), result360, resultBaidu, result114);
-
-                        if (resultCount == 3) {
-                            Constants.spSave(MainService.this, Constants.KEY_LAST_QUERY, content);
-                            if (Constants.spLoadBoolean(MainService.this, Constants.KEY_DING_TALK_FORWARD)) {
-                                try {
-                                    DingTalkBotSenderUtil.postDingTalkMarkDownMessage(Constants.spLoad(MainService.this, Constants.KEY_DING_TALK_TOKEN),
-                                            incomingNumber, HTML2Md.convertHtml(content, "utf-8"));
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-
-                        Message msg = handler.obtainMessage();
-                        msg.obj = content;
-                        handler.sendMessage(msg);
-                    }
-
-                    @Override
-                    public void run() {
-                        PhoneNumberJudge netJudge = new PhoneNumberJudge();
-                        netJudge.judgeNumberFrom360(incomingNumber, result -> {
-                                    result360 = result;
-                                    resultCount++;
-                                    sendMessage();
-                                    showOnGoingNotification(result360);
-                                }
-                        );
-                        netJudge.judgeNumberFromBaidu(incomingNumber, result -> {
-                                    resultBaidu = result;
-                                    resultCount++;
-                                    sendMessage();
-                                }
-                        );
-                        netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                                    result114 = result;
-                                    resultCount++;
-                                    sendMessage();
-                                }
-                        );
-                    }
-                });
+                phoneNumberQuery(MainService.incomingNumber);
                 break;
         }
-
     });
+
+    public void phoneNumberQuery(String incomingNumber) {
+        callTime = System.currentTimeMillis();
+        MainService.incomingNumber = incomingNumber;
+        singleThreadExecutor.execute(() -> {
+            PhoneNumberJudge netJudge = new PhoneNumberJudge();
+            netJudge.judgeNumberFrom360(incomingNumber, result -> {
+                        result360 = result;
+                        resultCount++;
+                        sendMessage();
+                        showOnGoingNotification(result360);
+                    }
+            );
+            netJudge.judgeNumberFromBaidu(incomingNumber, result -> {
+                        resultBaidu = result;
+                        resultCount++;
+                        sendMessage();
+                    }
+            );
+            netJudge.judgeNumberFrom114(incomingNumber, result -> {
+                        result114 = result;
+                        resultCount++;
+                        sendMessage();
+                    }
+            );
+        });
+    }
+
+    private void sendMessage() {
+        String content = String.format(contentFormat, incomingNumber, sdf.format(callTime), result360, resultBaidu, result114);
+
+        if (resultCount == 3) {
+            Constants.spSave(MainService.this, Constants.KEY_LAST_QUERY, content);
+            if (Constants.spLoadBoolean(MainService.this, Constants.KEY_DING_TALK_FORWARD)) {
+                try {
+                    DingTalkBotSenderUtil.postDingTalkMarkDownMessage(Constants.spLoad(MainService.this, Constants.KEY_DING_TALK_TOKEN),
+                            incomingNumber, HTML2Md.convertHtml(content, "utf-8"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        Message msg = handler.obtainMessage();
+        msg.obj = content;
+        handler.sendMessage(msg);
+    }
 
     public void reset() {
         floatWindow.hideFloatWindow();

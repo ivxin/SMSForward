@@ -156,13 +156,30 @@
             android:textColor="@android:color/black"
             android:textSize="12sp" />
 
-        <CheckBox
-            android:id="@+id/cb_reject_incoming_call"
-            android:layout_weight="1"
-            android:checked="true"
-            android:text="@string/reject_in_coming_calls"
-            android:textColor="@android:color/black"
-            android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/cb_reject_incoming_call"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="@string/reject_in_coming_calls"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+
+            <CheckBox
+                android:id="@+id/cb_ignore_crank_calls"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/ignore_crank_calls"
+                android:textColor="@android:color/black"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/btn_test_email"

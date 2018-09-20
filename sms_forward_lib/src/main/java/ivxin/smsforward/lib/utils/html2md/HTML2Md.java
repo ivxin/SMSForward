@@ -39,8 +39,8 @@ public class HTML2Md {
 
     public static String convertHtml(String html, String charset) throws IOException {
         Document doc = Jsoup.parse(html, charset);
-
         return parseDocument(doc);
+//        return new Remark().convertFragment(html);
     }
 
     public static String convertFile(File file, String charset) throws IOException {

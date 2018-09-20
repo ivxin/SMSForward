@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Process;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
+import android.text.InputType;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -138,7 +139,14 @@ public class MainActivity extends BaseActivity {
         });
         DingTalkBotSenderUtil.setOnSendCallbackListener((message, result) -> runOnUiThread(() -> {
             if (!isFinishing()) {
-                tv_info.setText(result);
+                hideLoadingDialog();
+//                MarkdownProcessor markdownProcessor = new MarkdownProcessor(this);
+//                markdownProcessor.factory(TextFactory.create());
+//                markdownProcessor.config(markdownConfiguration);
+//                tv_info.setText(markdownProcessor.parse(message + "\n\n" + result));
+//                MarkDownDisplayHelper.display(tv_info, message + "\n\n" + result);
+                tv_info.setText(message + "\n\n" + result);
+                wv_result.loadDataWithBaseURL("", Constants.spLoad(this, Constants.KEY_LAST_QUERY), "text/html", "UTF-8", "");
             }
         }));
     }
@@ -146,4 +154,23 @@ public class MainActivity extends BaseActivity {
     public void close(View view) {
         finish();
     }
+
+    public void query(View view) {
+        final EditText editText = new EditText(MainActivity.this);
+        editText.setPadding(50, 50, 50, 50);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this)
+                .setView(editText)
+                .setPositiveButton("查询", (dialog, which) -> {
+                    dialog.dismiss();
+                    Intent serviceIntent = new Intent(this, MainService.class);
+                    serviceIntent.putExtra(MainService.PHONE_NUMBER_TO_QUERY, editText.getText().toString().trim());
+                    startService(serviceIntent);
+                    showLoadingDialog();
+                })
+                .setNegativeButton("取消", null)
+                .create();
+        alertDialog.show();
+    }
+
 }

@@ -33,7 +33,7 @@
     <string name="check_tip">如果短信包含 \'restart\', 设备会重启此App</string>
     <string name="keep_screen_on">保持屏幕常亮</string>
     <string name="send_in_coming_call_mail">来电发送邮件提醒</string>
-    <string name="reject_in_coming_calls">拒接来电</string>
+    <string name="reject_in_coming_calls">拒接来电(实现遇忙呼转)</string>
     <string name="loadmore">上滑加载更多</string>
     <string name="loading">加载中</string>
     <string name="loadfail">加载失败</string>
@@ -47,4 +47,5 @@
     <string name="command_verify_code">防刷验证码</string>
     <string name="verify_code">任何字符验证码(防刷)</string>
     <string name="copy_sender_config">使用发送配置</string>
+    <string name="ignore_crank_calls">忽略骚扰电话</string>
 </resources>

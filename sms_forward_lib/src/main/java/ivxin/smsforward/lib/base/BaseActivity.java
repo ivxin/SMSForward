@@ -12,7 +12,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.TextUtils;
+import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import ivxin.smsforward.lib.R;
 
 
 /**
@@ -123,6 +126,23 @@ public class BaseActivity extends AppCompatActivity {
         AlertDialog dialog = builder.create();
         dialog.show();
         return dialog;
+    }
+
+    private AlertDialog loadingDialog;
+
+    public void showLoadingDialog() {
+        if (loadingDialog == null) {
+            ProgressBar view = new ProgressBar(this);
+            loadingDialog = new AlertDialog.Builder(this, R.style.MyDialogTrans).create();
+            loadingDialog.setView(view);
+        }
+        loadingDialog.show();
+    }
+
+    public void hideLoadingDialog() {
+        if (!isFinishing() && loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 
 }

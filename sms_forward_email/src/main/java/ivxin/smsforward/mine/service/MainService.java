@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
@@ -25,21 +26,22 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import ivxin.smsforward.lib.entity.CommandEmail;
+import ivxin.smsforward.lib.receiver.BatteryReceiver;
+import ivxin.smsforward.lib.utils.AssertReader;
+import ivxin.smsforward.lib.utils.MailFetchUtil;
+import ivxin.smsforward.lib.utils.PhoneNumberJudge;
+import ivxin.smsforward.lib.utils.PingUtil;
+import ivxin.smsforward.lib.utils.SignalUtil;
+import ivxin.smsforward.lib.utils.SmsSender;
 import ivxin.smsforward.mine.Constants;
 import ivxin.smsforward.mine.MainActivity;
 import ivxin.smsforward.mine.ProcessConnection;
 import ivxin.smsforward.mine.R;
-import ivxin.smsforward.mine.entity.CommandEmail;
 import ivxin.smsforward.mine.entity.MailEntity;
 import ivxin.smsforward.mine.entity.SMSEntity;
-import ivxin.smsforward.mine.receiver.BatteryReceiver;
 import ivxin.smsforward.mine.receiver.SMSReceiver;
-import ivxin.smsforward.mine.utils.MailFetchUtil;
 import ivxin.smsforward.mine.utils.MailSenderHelper;
-import ivxin.smsforward.mine.utils.PhoneNumberJudge;
-import ivxin.smsforward.mine.utils.PingUtil;
-import ivxin.smsforward.mine.utils.SignalUtil;
-import ivxin.smsforward.mine.utils.SmsSender;
 
 public class MainService extends Service {
     public static final String TAG = MainService.class.getSimpleName();
@@ -50,22 +52,104 @@ public class MainService extends Service {
     private SMSReceiver smsReceiver = new SMSReceiver();
     private BatteryReceiver batteryReceiver = new BatteryReceiver();
 
-    private SignalUtil.SignalListener mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> Constants.signalType = signalType, incomingNumber -> {
-        if (Constants.started) {
-            if (Constants.incomingCallMail) {
-                PhoneNumberJudge netJudge = new PhoneNumberJudge();
-                netJudge.judgeNumberFrom360(incomingNumber, (result) -> {
-                    String subject = String.format(Locale.CHINA, "[短信转发]%s 来电", incomingNumber);
-                    MailEntity mailEntity = new MailEntity();
-                    mailEntity.setReceiver(Constants.receiverEmail);
-                    mailEntity.setSubject(subject);
-                    mailEntity.setContent("来电查询结果：" + Constants.BR + result);
-                    mailEntity.setSendTime(System.currentTimeMillis());
-                    MailSenderHelper.sendEmail(mailEntity);
-                });
-            }
+    private String result360 = "", resultBaidu = "", result114 = "";
+    private byte resultCount = 0;
+
+    private SignalUtil.SignalListener mListener = new SignalUtil.SignalListener(this, (signalType, gsmSignalStrength) -> Constants.signalType = signalType, (state, incomingNumber) -> {
+        switch (state) {
+            case TelephonyManager.CALL_STATE_IDLE:
+                Constants.isRinging = false;
+                reset();
+                Log.d(TAG, "onCallStateChanged:CALL_STATE_IDLE " + incomingNumber);
+                break;
+            case TelephonyManager.CALL_STATE_OFFHOOK:
+                Constants.isRinging = false;
+                reset();
+                Log.d(TAG, "onCallStateChanged: CALL_STATE_OFFHOOK " + incomingNumber);
+                break;
+            case TelephonyManager.CALL_STATE_RINGING:
+                Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING " + incomingNumber);
+                Constants.isRinging = true;
+                if (Constants.started) {
+                    if (Constants.incomingCallMail) {
+                        phoneNumberQuery(incomingNumber);
+                    }
+                }
+                break;
         }
     });
+
+    void reset() {
+        result360 = "";
+        resultBaidu = "";
+        result114 = "";
+        resultCount = 0;
+    }
+
+    public void phoneNumberQuery(String incomingNumber) {
+        singleThreadExecutor.execute(() -> {
+            PhoneNumberJudge netJudge = new PhoneNumberJudge();
+            netJudge.judgeNumberFrom360(incomingNumber, result -> {
+                        result360 = result;
+                        resultCount++;
+                        sendMail(incomingNumber);
+                    }
+            );
+            netJudge.judgeNumberFromBaidu(incomingNumber, result -> {
+                        resultBaidu = result;
+                        resultCount++;
+                        sendMail(incomingNumber);
+                    }
+            );
+            netJudge.judgeNumberFrom114(incomingNumber, result -> {
+                        result114 = result;
+                        resultCount++;
+                        sendMail(incomingNumber);
+                    }
+            );
+        });
+    }
+
+    private void sendMail(String incomingNumber) {
+        if (resultCount == 3) {
+            AssertReader.readStringFromAssertFile(this, "crank_call_keywords.txt", string -> {
+                String result = result360 + Constants.BR + Constants.BR + resultBaidu + Constants.BR + Constants.BR + result114;
+
+                boolean isCrankCall = false;
+                String phoneCallTag = "正常";
+                String[] lines = string.split("|");
+                for (String line : lines) {
+                    if (result.contains(line)) {
+                        isCrankCall = true;
+                        phoneCallTag = line;
+                        break;
+                    }
+                }
+
+                String subject = String.format(Locale.CHINA, "来自%s的呼转 [%s]%s 来电", Constants.DEVICE_NAME, phoneCallTag, incomingNumber);
+                MailEntity mailEntity = new MailEntity();
+                mailEntity.setReceiver(Constants.receiverEmail);
+                mailEntity.setSubject(subject);
+                mailEntity.setContent("来电查询结果：" + Constants.BR + result);
+                mailEntity.setSendTime(System.currentTimeMillis());
+                MailSenderHelper.sendEmail(mailEntity);
+
+                final boolean isCrankCallFinal = isCrankCall;
+                new Handler().postDelayed(() -> {//延迟以保证先收到邮件再收到电话
+                    if (Constants.rejectIncomingCalls && Constants.isRinging) {
+                        if (Constants.ignoreCrankCalls) {//需要忽略骚扰电话
+                            if (!isCrankCallFinal) {//如果不是骚扰就可以挂断以实现呼转
+                                SignalUtil.endcall(MainService.this);
+                            }//如果是骚扰电话就忽略掉不进行呼转,以防止被打扰
+                        } else {//全部挂断呼转
+                            SignalUtil.endcall(MainService.this);
+                        }
+                    }
+                }, 2000);
+            });
+
+        }
+    }
 
     private BatteryReceiver.OnBatteryInfoUpdateListener onBatteryInfoUpdateListener = (action, status, percent) -> {
         Constants.battery_level = percent;

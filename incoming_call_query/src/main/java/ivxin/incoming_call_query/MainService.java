@@ -136,7 +136,7 @@ public class MainService extends BaseService {
             case TelephonyManager.CALL_STATE_RINGING:
                 Log.d(TAG, "onCallStateChanged: CALL_STATE_RINGING " + incomingNumber);
                 floatWindow.showFloatWindow();
-                phoneNumberQuery(MainService.incomingNumber);
+                phoneNumberQuery(incomingNumber);
                 break;
         }
     });

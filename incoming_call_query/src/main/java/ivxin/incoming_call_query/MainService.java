@@ -164,8 +164,11 @@ public class MainService extends BaseService {
                     }
             );
             netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                        String ad = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
-                        result114 = deleteAd(result, ad);
+                        String ad1 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271010.png\" width=\"18\" height=\"18\" alt=\"电话\">";
+                        String ad2 = "<img class=\"p1\" style=\"margin: 9px 5px;\" src=\"http://m.114best.com/images/ico_201609271011.png\" width=\"18\" height=\"18\" alt=\"归属地\">";
+                        String ad3 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271000.png\" width=\"18\" height=\"18\" alt=\"标记\">";
+                        String ad4 = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
+                        result114 = deleteAd(result, ad1, ad2, ad3, ad4);
                         resultCount++;
                         sendMessage(incomingNumber);
                     }
@@ -173,9 +176,11 @@ public class MainService extends BaseService {
         });
     }
 
-    private String deleteAd(String result, String ad) {
-        if (result.contains(ad)) {
-            result = result.replaceAll(ad, "");
+    private String deleteAd(String result, String... ads) {
+        for (String ad : ads) {
+            if (result.contains(ad)) {
+                result = result.replaceAll(ad, "");
+            }
         }
         return result;
     }
@@ -189,12 +194,12 @@ public class MainService extends BaseService {
         String content = String.format(contentFormat, displayName, sdf.format(callTime), result360, resultBaidu, result114);
 
         if (resultCount == 3) {
+            resultCount = 0;
             Constants.spSave(MainService.this, Constants.KEY_LAST_QUERY, content);
             if (Constants.spLoadBoolean(MainService.this, Constants.KEY_DING_TALK_FORWARD)) {
                 try {
                     DingTalkBotSenderUtil.postDingTalkMarkDownMessage(Constants.spLoad(MainService.this, Constants.KEY_DING_TALK_TOKEN),
                             incomingNumber + "查询结果", HTML2Md.convertHtml(content, "utf-8"));
-                    resultCount = 0;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -226,7 +231,7 @@ public class MainService extends BaseService {
                 PendingIntent.FLAG_ONE_SHOT);
         AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         if (mgr != null) {
-            mgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + (30 * 1000),
+            mgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + (120 * 1000),
                     restartIntent);
         }
 

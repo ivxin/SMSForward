@@ -104,8 +104,11 @@ public class MainService extends Service {
                     }
             );
             netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                        String ad = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
-                        result114 = deleteAd(result, ad);
+                        String ad1 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271010.png\" width=\"18\" height=\"18\" alt=\"电话\">";
+                        String ad2 = "<img class=\"p1\" style=\"margin: 9px 5px;\" src=\"http://m.114best.com/images/ico_201609271011.png\" width=\"18\" height=\"18\" alt=\"归属地\">";
+                        String ad3 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271000.png\" width=\"18\" height=\"18\" alt=\"标记\">";
+                        String ad4 = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
+                        result114 = deleteAd(result, ad1, ad2, ad3, ad4);
                         resultCount++;
                         sendMail(incomingNumber);
                     }
@@ -113,9 +116,11 @@ public class MainService extends Service {
         });
     }
 
-    private String deleteAd(String result, String ad) {
-        if (result.contains(ad)) {
-            result = result.replaceAll(ad, "");
+    private String deleteAd(String result, String... ads) {
+        for (String ad : ads) {
+            if (result.contains(ad)) {
+                result = result.replaceAll(ad, "");
+            }
         }
         return result;
     }

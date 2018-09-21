@@ -53,7 +53,7 @@ public class MainActivity extends BaseActivity {
                 Constants.HAVE_PERMISSION = false;
                 tv_info.setText("没有权限");
             }
-        }, Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE);
+        }, Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_CONTACTS);
         //权限判断
         if (Build.VERSION.SDK_INT >= 23) {
             Constants.HAVE_FLOAT_PERMISSION = Settings.canDrawOverlays(this);

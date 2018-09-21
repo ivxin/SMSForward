@@ -13,6 +13,7 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebView;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import ivxin.smsforward.lib.service.BaseService;
+import ivxin.smsforward.lib.utils.ContactsUtil;
 import ivxin.smsforward.lib.utils.DingTalkBotSenderUtil;
 import ivxin.smsforward.lib.utils.html2md.HTML2Md;
 import ivxin.smsforward.lib.utils.PhoneNumberJudge;
@@ -61,7 +63,8 @@ public class MainService extends BaseService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && intent.hasExtra(PHONE_NUMBER_TO_QUERY)) {
-            phoneNumberQuery(intent.getStringExtra(PHONE_NUMBER_TO_QUERY));
+            MainService.incomingNumber = intent.getStringExtra(PHONE_NUMBER_TO_QUERY);
+            phoneNumberQuery(MainService.incomingNumber);
         }
         startServiceAgainViaAlarm();
         registerReceivers();
@@ -147,42 +150,56 @@ public class MainService extends BaseService {
         singleThreadExecutor.execute(() -> {
             PhoneNumberJudge netJudge = new PhoneNumberJudge();
             netJudge.judgeNumberFrom360(incomingNumber, result -> {
-                        result360 = result;
+                        String ad = "安装360手机卫士，骚扰电话无所遁形！";
+                        result360 = deleteAd(result, ad);
                         resultCount++;
-                        sendMessage();
+                        sendMessage(incomingNumber);
                         showOnGoingNotification(result360);
                     }
             );
             netJudge.judgeNumberFromBaidu(incomingNumber, result -> {
                         resultBaidu = result;
                         resultCount++;
-                        sendMessage();
+                        sendMessage(incomingNumber);
                     }
             );
             netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                        result114 = result;
+                        String ad = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
+                        result114 = deleteAd(result, ad);
                         resultCount++;
-                        sendMessage();
+                        sendMessage(incomingNumber);
                     }
             );
         });
     }
 
-    private void sendMessage() {
-        String content = String.format(contentFormat, incomingNumber, sdf.format(callTime), result360, resultBaidu, result114);
+    private String deleteAd(String result, String ad) {
+        if (result.contains(ad)) {
+            result = result.replaceAll(ad, "");
+        }
+        return result;
+    }
+
+    private void sendMessage(String incomingNumber) {
+        String displayName = incomingNumber;
+        String name = ContactsUtil.getDisplayNameByNumber(this, incomingNumber);
+        if (!TextUtils.isEmpty(name)) {
+            displayName = name;
+        }
+        String content = String.format(contentFormat, displayName, sdf.format(callTime), result360, resultBaidu, result114);
 
         if (resultCount == 3) {
             Constants.spSave(MainService.this, Constants.KEY_LAST_QUERY, content);
             if (Constants.spLoadBoolean(MainService.this, Constants.KEY_DING_TALK_FORWARD)) {
                 try {
                     DingTalkBotSenderUtil.postDingTalkMarkDownMessage(Constants.spLoad(MainService.this, Constants.KEY_DING_TALK_TOKEN),
-                            incomingNumber, HTML2Md.convertHtml(content, "utf-8"));
+                            incomingNumber + "查询结果", HTML2Md.convertHtml(content, "utf-8"));
+                    resultCount = 0;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
-
         Message msg = handler.obtainMessage();
         msg.obj = content;
         handler.sendMessage(msg);

@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import ivxin.smsforward.lib.entity.CommandEmail;
 import ivxin.smsforward.lib.receiver.BatteryReceiver;
 import ivxin.smsforward.lib.utils.AssertReader;
+import ivxin.smsforward.lib.utils.ContactsUtil;
 import ivxin.smsforward.lib.utils.MailFetchUtil;
 import ivxin.smsforward.lib.utils.PhoneNumberJudge;
 import ivxin.smsforward.lib.utils.PingUtil;
@@ -90,7 +91,8 @@ public class MainService extends Service {
         singleThreadExecutor.execute(() -> {
             PhoneNumberJudge netJudge = new PhoneNumberJudge();
             netJudge.judgeNumberFrom360(incomingNumber, result -> {
-                        result360 = result;
+                        String ad = "安装360手机卫士，骚扰电话无所遁形！";
+                        result360 = deleteAd(result, ad);
                         resultCount++;
                         sendMail(incomingNumber);
                     }
@@ -102,12 +104,20 @@ public class MainService extends Service {
                     }
             );
             netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                        result114 = result;
+                        String ad = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
+                        result114 = deleteAd(result, ad);
                         resultCount++;
                         sendMail(incomingNumber);
                     }
             );
         });
+    }
+
+    private String deleteAd(String result, String ad) {
+        if (result.contains(ad)) {
+            result = result.replaceAll(ad, "");
+        }
+        return result;
     }
 
     private void sendMail(String incomingNumber) {
@@ -127,7 +137,10 @@ public class MainService extends Service {
                         break;
                     }
                 }
-
+                String name = ContactsUtil.getDisplayNameByNumber(this, incomingNumber);
+                if (!TextUtils.isEmpty(name)) {
+                    phoneCallTag = name;
+                }
                 String subject = String.format(Locale.CHINA, "来自%s的呼转 [%s]%s 来电", Constants.DEVICE_NAME, phoneCallTag, incomingNumber);
                 MailEntity mailEntity = new MailEntity();
                 mailEntity.setReceiver(Constants.receiverEmail);

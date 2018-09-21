@@ -258,6 +258,7 @@ public class MainActivity extends BaseActivity {
                              }
                          }, Manifest.permission.RECEIVE_SMS,
                 Manifest.permission.SEND_SMS,
+                Manifest.permission.READ_CONTACTS,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.READ_PHONE_STATE);

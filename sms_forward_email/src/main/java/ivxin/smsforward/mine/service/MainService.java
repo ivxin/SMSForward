@@ -1,5 +1,6 @@
 package ivxin.smsforward.mine.service;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -11,9 +12,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
@@ -35,6 +39,7 @@ import ivxin.smsforward.lib.utils.PhoneNumberJudge;
 import ivxin.smsforward.lib.utils.PingUtil;
 import ivxin.smsforward.lib.utils.SignalUtil;
 import ivxin.smsforward.lib.utils.SmsSender;
+import ivxin.smsforward.lib.utils.callhelper.CallHelper;
 import ivxin.smsforward.mine.Constants;
 import ivxin.smsforward.mine.MainActivity;
 import ivxin.smsforward.mine.ProcessConnection;
@@ -46,9 +51,9 @@ import ivxin.smsforward.mine.utils.MailSenderHelper;
 
 public class MainService extends Service {
     public static final String TAG = MainService.class.getSimpleName();
+    public final Handler handler = new Handler();
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private TelephonyManager mTelephonyManager;
-
     private NotificationManager mNotificationManager;
     private SMSReceiver smsReceiver = new SMSReceiver();
     private BatteryReceiver batteryReceiver = new BatteryReceiver();
@@ -74,6 +79,7 @@ public class MainService extends Service {
                 if (Constants.started) {
                     if (Constants.incomingCallMail) {
                         phoneNumberQuery(incomingNumber);
+//                        phoneNumberQuery("037155120904");
                     }
                 }
                 break;
@@ -155,15 +161,24 @@ public class MainService extends Service {
                 MailSenderHelper.sendEmail(mailEntity);
 
                 final boolean isCrankCallFinal = isCrankCall;
-                new Handler().postDelayed(() -> {//延迟以保证先收到邮件再收到电话
-                    if (Constants.rejectIncomingCalls && Constants.isRinging) {
-                        if (Constants.ignoreCrankCalls) {//需要忽略骚扰电话
-                            if (!isCrankCallFinal) {//如果不是骚扰就可以挂断以实现呼转
-                                SignalUtil.endcall(MainService.this);
-                            }//如果是骚扰电话就忽略掉不进行呼转,以防止被打扰
-                        } else {//全部挂断呼转
-                            SignalUtil.endcall(MainService.this);
+                handler.postDelayed(() -> {//延迟以保证携带手机先收到邮件再收到电话
+                    try {
+                        if (Constants.rejectIncomingCalls && Constants.isRinging) {
+                            if (Constants.ignoreCrankCalls) {//需要忽略骚扰电话
+                                if (!isCrankCallFinal) {//如果不是骚扰就可以挂断以实现呼转
+                                    SignalUtil.endcall(MainService.this);
+                                }//如果是骚扰电话就忽略掉不进行呼转,防止被打扰
+                                else {//或者接听后挂断
+                                    CallHelper.getsInstance(MainService.this).acceptCall(MainService.this);
+                                    handler.postDelayed(() -> SignalUtil.endcall(MainService.this), 20 * 1000);
+                                }
+                            } else {//全部挂断呼转
+//                                SignalUtil.endcall(MainService.this);
+                                CallHelper.getsInstance(MainService.this).rejectCall(MainService.this);
+                            }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }, 1000);
             });
@@ -252,7 +267,10 @@ public class MainService extends Service {
                 String subject = commandEmail.getSubject();
                 if (!TextUtils.isEmpty(subject)) {
                     if (subject.contains("RemoteSmsSend")) {
-                        parseCommand(subject);
+                        parseCommandSendSMS(subject);
+                    }
+                    if (subject.contains("RemoteCall")) {
+                        parseCommandCall(subject);
                     }
                 }
 
@@ -270,7 +288,7 @@ public class MainService extends Service {
         void onMailReceived(CommandEmail commandEmail, long receivedTime);
     }
 
-    private void parseCommand(String mailSubject) {
+    private void parseCommandSendSMS(String mailSubject) {
         try {
             JSONObject jsonObject = new JSONObject(mailSubject);
             String target = jsonObject.getString("target");
@@ -291,6 +309,64 @@ public class MainService extends Service {
         } catch (Exception e) {
             e.printStackTrace();
             String subject = "[短信转发]远程短信发送失败";
+            String content = mailSubject + Constants.BR + e.getLocalizedMessage();
+            MailEntity mailEntity = new MailEntity();
+            mailEntity.setReceiver(Constants.receiverEmail);
+            mailEntity.setSubject(subject);
+            mailEntity.setContent(content);
+            mailEntity.setSendTime(System.currentTimeMillis());
+            MailSenderHelper.sendEmail(mailEntity);
+        }
+
+    }
+
+    private void parseCommandCall(String mailSubject) {
+        try {
+            JSONObject jsonObject = new JSONObject(mailSubject);
+            String target = jsonObject.getString("target");
+            String type = jsonObject.getString("type");
+            String code = jsonObject.getString("code");
+
+            String callCommandNumber = "";
+            if (Constants.commandCode.equals(code)) {
+                switch (type) {
+                    case "拨号":
+                        callCommandNumber = String.format(Locale.CHINA, "tel:%s", target);
+                        break;
+                    case "挂断":
+//                        SignalUtil.endcall(MainService.this);
+                        CallHelper.getsInstance(MainService.this).rejectCall(MainService.this);
+                        return;
+                }
+
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                    Intent callIntent = new Intent(Intent.ACTION_CALL);
+                    callIntent.setData(Uri.parse(callCommandNumber));
+                    callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(callIntent);
+
+                    String subject = "[短信转发]远程呼叫成功";
+                    String content = "呼叫类型:" + type + Constants.BR + "目标号码:" + target;
+                    MailEntity mailEntity = new MailEntity();
+                    mailEntity.setReceiver(Constants.receiverEmail);
+                    mailEntity.setSubject(subject);
+                    mailEntity.setContent(content);
+                    mailEntity.setSendTime(System.currentTimeMillis());
+                    MailSenderHelper.sendEmail(mailEntity);
+                } else {
+                    String subject = "[短信转发]远程呼叫失败,没有权限";
+                    String content = mailSubject + Constants.BR + "没有权限";
+                    MailEntity mailEntity = new MailEntity();
+                    mailEntity.setReceiver(Constants.receiverEmail);
+                    mailEntity.setSubject(subject);
+                    mailEntity.setContent(content);
+                    mailEntity.setSendTime(System.currentTimeMillis());
+                    MailSenderHelper.sendEmail(mailEntity);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            String subject = "[短信转发]远程呼叫失败";
             String content = mailSubject + Constants.BR + e.getLocalizedMessage();
             MailEntity mailEntity = new MailEntity();
             mailEntity.setReceiver(Constants.receiverEmail);

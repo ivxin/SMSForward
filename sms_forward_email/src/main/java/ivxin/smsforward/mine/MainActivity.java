@@ -260,6 +260,7 @@ public class MainActivity extends BaseActivity {
                 Manifest.permission.SEND_SMS,
                 Manifest.permission.READ_CONTACTS,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                "android.permission.ANSWER_PHONE_CALLS",
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.READ_PHONE_STATE);
     }

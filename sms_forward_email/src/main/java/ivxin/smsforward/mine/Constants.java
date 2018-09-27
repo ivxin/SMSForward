@@ -137,8 +137,8 @@ public class Constants {
         senderEmail = sp.getString(SP_KEYS.KEY_SENDER_EMAIL, "");
         senderEmailPassword = sp.getString(SP_KEYS.KEY_SENDER_PASSWORD, "");
         serverHost = sp.getString(SP_KEYS.KEY_SERVER_HOST, "");
-        serverPort = sp.getInt(SP_KEYS.KEY_SERVER_PORT, 0);
-        socketFactoryPort = sp.getInt(SP_KEYS.KEY_SOCKET_FACTORY_PORT, 0);
+        serverPort = sp.getInt(SP_KEYS.KEY_SERVER_PORT, 110);
+        socketFactoryPort = sp.getInt(SP_KEYS.KEY_SOCKET_FACTORY_PORT, 465);
         autenticationEnabled = sp.getBoolean(SP_KEYS.KEY_AUTENTICATION, false);
         receiverEmail = sp.getString(SP_KEYS.KEY_RECEIVER_EMAIL, "");
     }

@@ -47,19 +47,18 @@ public class MailSenderHelper {
     }
 
     public static void sendTestEmail(Context context) {
-        String mailText = "[短信转发]测试邮件内容" + Constants.BR
+        StringBuilder mailText = new StringBuilder("[短信转发]测试邮件内容" + Constants.BR
                 + "命令通过标题发送,app使用json解析的方式,不要写其他内容,否则会失败" + Constants.BR
                 + "远程控制发送短信的标题格式:" + Constants.BR
                 + "{command=\"RemoteSmsSend\",target=\"10086\",content=\"cxll\",code=\"1\"}" + Constants.BR
                 + "远程控制拨号(双卡机提前设置默认拨号卡)的标题格式:" + Constants.BR
                 + "{command=\"RemoteCall\",target=\"10086\",type=\"拨号\",code=\"1\"}" + Constants.BR
-                + "type的值：拨号|挂断" + Constants.BR
-//                + context.getString(R.string.check_tip)
+                + "type的值：拨号|挂断" + Constants.BR)
                 ;
         MailEntity mailEntity = new MailEntity();
         mailEntity.setSendTime(System.currentTimeMillis());
         mailEntity.setSubject("[短信转发]测试邮件标题");
-        mailEntity.setContent(mailText);
+        mailEntity.setContent(mailText.toString());
         mailEntity.setReceiver(Constants.receiverEmail);
         singleThreadExecutor.execute(new EmailSendTask(mailEntity));
     }

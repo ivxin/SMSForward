@@ -34,6 +34,7 @@ import ivxin.smsforward.lib.entity.CommandEmail;
 import ivxin.smsforward.lib.receiver.BatteryReceiver;
 import ivxin.smsforward.lib.utils.AssertReader;
 import ivxin.smsforward.lib.utils.ContactsUtil;
+import ivxin.smsforward.mine.utils.JunkSMSAnalysisUtil;
 import ivxin.smsforward.lib.utils.MailFetchUtil;
 import ivxin.smsforward.lib.utils.PhoneNumberJudge;
 import ivxin.smsforward.lib.utils.PingUtil;
@@ -51,6 +52,12 @@ import ivxin.smsforward.mine.utils.MailSenderHelper;
 
 public class MainService extends Service {
     public static final String TAG = MainService.class.getSimpleName();
+    public static final String[] ads = {
+            "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271010.png\" width=\"18\" height=\"18\" alt=\"电话\">",
+            "<img class=\"p1\" style=\"margin: 9px 5px;\" src=\"http://m.114best.com/images/ico_201609271011.png\" width=\"18\" height=\"18\" alt=\"归属地\">",
+            "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271000.png\" width=\"18\" height=\"18\" alt=\"标记\">",
+            "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>",
+    };
     public final Handler handler = new Handler();
     private static ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
     private TelephonyManager mTelephonyManager;
@@ -110,11 +117,7 @@ public class MainService extends Service {
                     }
             );
             netJudge.judgeNumberFrom114(incomingNumber, result -> {
-                        String ad1 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271010.png\" width=\"18\" height=\"18\" alt=\"电话\">";
-                        String ad2 = "<img class=\"p1\" style=\"margin: 9px 5px;\" src=\"http://m.114best.com/images/ico_201609271011.png\" width=\"18\" height=\"18\" alt=\"归属地\">";
-                        String ad3 = "<img class=\"p1\" src=\"http://m.114best.com/images/ico_201609271000.png\" width=\"18\" height=\"18\" alt=\"标记\">";
-                        String ad4 = "<li style=\"text-align:center\"><a href=\"http://go.izd.cn/zdapp\" style=\"color:#369\">下载官方APP，随时随地查询精准信息</a></li>";
-                        result114 = deleteAd(result, ad1, ad2, ad3, ad4);
+                        result114 = deleteAd(result, ads);
                         resultCount++;
                         sendMail(incomingNumber);
                     }
@@ -142,14 +145,16 @@ public class MainService extends Service {
                 String phoneCallTag = "正常";
                 String[] lines = string.split(",");
                 for (String line : lines) {
-                    if (!TextUtils.isEmpty(line) && result.contains(line)) {
+                    line = line.trim();
+                    if (!TextUtils.isEmpty(line)) if (result.contains(line)) {
                         isCrankCall = true;
                         phoneCallTag = line;
                         break;
                     }
                 }
                 String name = ContactsUtil.getDisplayNameByNumber(this, incomingNumber);
-                if (!TextUtils.isEmpty(name)) {
+                boolean isContactNumber = !TextUtils.isEmpty(name);
+                if (isContactNumber) {
                     phoneCallTag = name;
                 }
                 String subject = String.format(Locale.CHINA, "来自%s的呼转 [%s]%s 来电", Constants.DEVICE_NAME, phoneCallTag, incomingNumber);
@@ -164,6 +169,10 @@ public class MainService extends Service {
                 handler.postDelayed(() -> {//延迟以保证携带手机先收到邮件再收到电话
                     try {
                         if (Constants.rejectIncomingCalls && Constants.isRinging) {
+                            if (isContactNumber) {
+                                SignalUtil.endcall(MainService.this);
+                                return;
+                            }
                             if (Constants.ignoreCrankCalls) {//需要忽略骚扰电话
                                 if (!isCrankCallFinal) {//如果不是骚扰就可以挂断以实现呼转
                                     SignalUtil.endcall(MainService.this);
@@ -214,7 +223,7 @@ public class MainService extends Service {
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 
-        SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, receiverCardName, timestampMillis) -> {
+        SMSReceiver.setOnSMSReceivedListener((sender, content, receiverCard, receiverCardName, timestampMillis) -> JunkSMSAnalysisUtil.analysisText(content, result -> {
             SMSEntity smsEntity = new SMSEntity();
             smsEntity.setContent(content);
             smsEntity.setSender(sender);
@@ -223,7 +232,7 @@ public class MainService extends Service {
             smsEntity.setReceiverCardName(receiverCardName);
             smsEntity.setSendTime(System.currentTimeMillis());
             MailSenderHelper.sendEmail(smsEntity);
-        });
+        }));
     }
 
     @Override
